@@ -174,7 +174,7 @@ namespace Nafadh_Backend.Repositories
                 .ToList();
 
             var topPerformers = traineeStats
-                .Where(x => x.Performance >= 80 && x.Attendance >= 80)
+                .Where(x => x.Performance >= 80 && x.Attendance >= 90)
                 .OrderByDescending(x => x.Performance)
                 .ThenByDescending(x => x.Attendance)
                 .Select(x => new AdminDashboardTraineeDTO
