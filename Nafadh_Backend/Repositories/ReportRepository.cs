@@ -77,6 +77,239 @@ namespace Nafadh_Backend.Repositories
             return new DashboardChartsDTO { BatchesByYear = batchesByYear, TracksDistribution = tracksDistribution };
         }
 
+
+
+        // Retrieves database-backed metrics and lists for the Admin dashboard.
+        public async Task<AdminDashboardSummaryDTO> GetAdminDashboardSummaryAsync()
+        {
+            var totalTrainees = await _context.NFD_Trainees.CountAsync();
+
+            var activeTrainees = await _context.NFD_Trainees
+                .CountAsync(t => t.Status == NFD_TraineeStatus.InTraining);
+
+            var totalCompanies = await _context.NFD_Companies.CountAsync();
+            var totalBatches = await _context.NFD_Batches.CountAsync();
+            var totalCertificates = await _context.NFD_Certificates.CountAsync();
+
+            var totalCapacity = await _context.NFD_Companies
+                .SumAsync(c => (decimal?)c.Capacity) ?? 0m;
+
+            var enrollments = await _context.NFD_Enrollments
+                .AsNoTracking()
+                .Include(e => e.Trainee)
+                    .ThenInclude(t => t.User)
+                .Include(e => e.Company)
+                .Include(e => e.Batch)
+                    .ThenInclude(b => b.Program)
+                .Include(e => e.DailyAttendances)
+                .Include(e => e.Evaluations)
+                    .ThenInclude(ev => ev.EvaluationTemplate)
+                .ToListAsync();
+
+            var activeEnrollments = enrollments
+                .Where(e => e.CompletionStatus == NFD_EnrollmentCompletionStatus.InProgress)
+                .ToList();
+
+            var usedCapacity = activeEnrollments
+                .Select(e => e.TraineeId)
+                .Distinct()
+                .Count();
+
+            var allAttendance = enrollments
+                .SelectMany(e => e.DailyAttendances)
+                .ToList();
+
+            var overallAttendanceRate = allAttendance.Count > 0
+                ? Math.Round(
+                    allAttendance.Count(a => a.Status == NFD_AttendanceStatus.Present)
+                    * 100.0 / allAttendance.Count, 1)
+                : 0.0;
+
+            static decimal AverageScore(
+                NFD_Enrollment enrollment,
+                NFD_EvaluationType type)
+            {
+                var scores = enrollment.Evaluations
+                    .Where(e => e.EvaluationTemplate != null
+                        && e.EvaluationTemplate.Type == type)
+                    .Select(e => e.Score)
+                    .ToList();
+
+                return scores.Count > 0 ? scores.Average() : 0m;
+            }
+
+            static double GetPerformance(NFD_Enrollment enrollment)
+            {
+                var scores = new[]
+                {
+                    AverageScore(enrollment, NFD_EvaluationType.Technical),
+                    AverageScore(enrollment, NFD_EvaluationType.Behavioral),
+                    AverageScore(enrollment, NFD_EvaluationType.Final)
+                }
+                .Where(score => score > 0)
+                .ToList();
+
+                return scores.Count > 0
+                    ? Math.Round((double)scores.Average(), 1)
+                    : 0.0;
+            }
+
+            static double GetAttendance(NFD_Enrollment enrollment)
+            {
+                var records = enrollment.DailyAttendances;
+                return records.Count > 0
+                    ? Math.Round(
+                        records.Count(a => a.Status == NFD_AttendanceStatus.Present)
+                        * 100.0 / records.Count, 1)
+                    : 0.0;
+            }
+
+            var traineeStats = activeEnrollments
+                .Select(e => new
+                {
+                    Enrollment = e,
+                    Performance = GetPerformance(e),
+                    Attendance = GetAttendance(e)
+                })
+                .ToList();
+
+            var topPerformers = traineeStats
+                .Where(x => x.Performance >= 80 && x.Attendance >= 80)
+                .OrderByDescending(x => x.Performance)
+                .ThenByDescending(x => x.Attendance)
+                .Select(x => new AdminDashboardTraineeDTO
+                {
+                    TraineeId = x.Enrollment.TraineeId,
+                    EnrollmentId = x.Enrollment.EnrollmentId,
+                    FullName = x.Enrollment.Trainee.User?.FullName,
+                    Major = x.Enrollment.Trainee.Major,
+                    CompanyName = x.Enrollment.Company?.CompanyName,
+                    GitHubUrl = x.Enrollment.Trainee.GitHubUrl,
+                    LinkedInUrl = x.Enrollment.Trainee.LinkedInUrl,
+                    PerformancePercent = x.Performance,
+                    AttendancePercent = x.Attendance
+                })
+                .ToList();
+
+            var atRiskTrainees = traineeStats
+                .Where(x =>
+                    x.Enrollment.DailyAttendances.Count > 0
+                    && (x.Attendance < 80 || x.Performance < 60))
+                .OrderBy(x => x.Attendance)
+                .ThenBy(x => x.Performance)
+                .Select(x => new AdminDashboardTraineeDTO
+                {
+                    TraineeId = x.Enrollment.TraineeId,
+                    EnrollmentId = x.Enrollment.EnrollmentId,
+                    FullName = x.Enrollment.Trainee.User?.FullName,
+                    Major = x.Enrollment.Trainee.Major,
+                    CompanyName = x.Enrollment.Company?.CompanyName,
+                    GitHubUrl = x.Enrollment.Trainee.GitHubUrl,
+                    LinkedInUrl = x.Enrollment.Trainee.LinkedInUrl,
+                    PerformancePercent = x.Performance,
+                    AttendancePercent = x.Attendance
+                })
+                .ToList();
+
+            var attendanceWeeks = allAttendance
+                .GroupBy(a => (
+                    Year: System.Globalization.ISOWeek.GetYear(a.Date),
+                    Week: System.Globalization.ISOWeek.GetWeekOfYear(a.Date)))
+                .OrderByDescending(g => g.Key.Year)
+                .ThenByDescending(g => g.Key.Week)
+                .Take(6)
+                .OrderBy(g => g.Key.Year)
+                .ThenBy(g => g.Key.Week)
+                .Select(g => new ChartPointDTO
+                {
+                    Label = $"أسبوع {g.Key.Week}",
+                    Value = Math.Round(
+                        g.Count(a => a.Status == NFD_AttendanceStatus.Present)
+                        * 100.0 / g.Count(), 1)
+                })
+                .ToList();
+
+            var companyDistribution = activeEnrollments
+                .GroupBy(e => e.Company?.CompanyName ?? "غير محدد")
+                .Select(g => new ChartPointDTO
+                {
+                    Label = g.Key,
+                    Value = g.Count()
+                })
+                .OrderByDescending(x => x.Value)
+                .ToList();
+
+            var programDistribution = activeEnrollments
+                .GroupBy(e => e.Batch?.Program?.Title ?? "غير محدد")
+                .Select(g => new ChartPointDTO
+                {
+                    Label = g.Key,
+                    Value = g.Count()
+                })
+                .OrderByDescending(x => x.Value)
+                .ToList();
+
+            var warnings = await _context.NFD_Warnings
+                .AsNoTracking()
+                .Include(w => w.Company)
+                .Include(w => w.Enrollment)
+                    .ThenInclude(e => e!.Trainee)
+                        .ThenInclude(t => t.User)
+                .OrderByDescending(w => w.IssuedDate)
+                .Take(6)
+                .ToListAsync();
+
+            var recentWarnings = warnings
+                .Select(w => new AdminDashboardWarningDTO
+                {
+                    WarningId = w.WarningId,
+                    Scope = w.Scope.ToString(),
+                    TraineeId = w.Enrollment?.TraineeId,
+                    CompanyId = w.CompanyId,
+                    TargetName = w.Scope == NFD_WarningScope.Company
+                        ? w.Company?.CompanyName
+                        : w.Enrollment?.Trainee?.User?.FullName,
+                    GitHubUrl = w.Enrollment?.Trainee?.GitHubUrl,
+                    LinkedInUrl = w.Enrollment?.Trainee?.LinkedInUrl,
+                    Type = w.Type.ToString(),
+                    Level = w.Level.ToString(),
+                    Status = w.Status.ToString(),
+                    IssuedDate = w.IssuedDate
+                })
+                .ToList();
+
+            var averageTopScore = topPerformers.Count > 0
+                ? Math.Round(topPerformers.Average(t => t.PerformancePercent), 1)
+                : 0.0;
+
+            return new AdminDashboardSummaryDTO
+            {
+                TotalTrainees = totalTrainees,
+                ActiveTrainees = activeTrainees,
+                TotalCompanies = totalCompanies,
+                TotalBatches = totalBatches,
+                TotalCertificates = totalCertificates,
+                OverallAttendanceRate = overallAttendanceRate,
+                TopPerformersCount = topPerformers.Count,
+                TopPerformersAvgScore = averageTopScore,
+                AtRiskCount = atRiskTrainees.Count,
+
+                Capacity = new CompanyCapacityDTO
+                {
+                    Total = totalCapacity,
+                    Used = usedCapacity,
+                    Remaining = totalCapacity - usedCapacity
+                },
+
+                AttendanceWeeks = attendanceWeeks,
+                CompanyDistribution = companyDistribution,
+                ProgramDistribution = programDistribution,
+                TopPerformers = topPerformers,
+                AtRiskTrainees = atRiskTrainees,
+                RecentWarnings = recentWarnings
+            };
+        }
+
         // Admin Reports: end-of-batch performance drill-down.
         public async Task<BatchPerformanceReportDTO?> GetBatchPerformanceAsync(
             int batchId, int pageNumber, int pageSize)
