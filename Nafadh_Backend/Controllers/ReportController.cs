@@ -174,6 +174,15 @@ namespace Nafadh_Backend.Controllers
             return Ok(await _service.GetDashboardChartsAsync());
         }
 
+        // GET: api/Report/dashboard-summary
+        // Returns database-backed summary metrics for the Admin dashboard.
+        [HttpGet("dashboard-summary")]
+        public async Task<IActionResult> GetAdminDashboardSummary()
+        {
+            var summary = await _service.GetAdminDashboardSummaryAsync();
+            return Ok(summary);
+        }
+
         // GET: api/Report/batch-performance/{batchId}?pageNumber=1&pageSize=15 (Admin Reports drill-down)
         [HttpGet("batch-performance/{batchId}")]
         public async Task<IActionResult> GetBatchPerformance(
