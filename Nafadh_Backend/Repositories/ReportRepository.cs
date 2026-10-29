@@ -274,15 +274,18 @@ namespace Nafadh_Backend.Repositories
                 .OrderByDescending(x => x.Value)
                 .ToList();
 
+
             var warnings = await _context.NFD_Warnings
                 .AsNoTracking()
                 .Include(w => w.Company)
                 .Include(w => w.Enrollment)
-                    .ThenInclude(e => e!.Trainee)
-                        .ThenInclude(t => t.User)
+                .ThenInclude(e => e!.Trainee)
+                .ThenInclude(t => t.User)
                 .OrderByDescending(w => w.IssuedDate)
+                .ThenByDescending(w => w.WarningId)
                 .Take(6)
                 .ToListAsync();
+
 
             var recentWarnings = warnings
                 .Select(w => new AdminDashboardWarningDTO
