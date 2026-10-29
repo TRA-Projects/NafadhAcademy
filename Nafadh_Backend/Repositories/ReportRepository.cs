@@ -126,6 +126,7 @@ namespace Nafadh_Backend.Repositories
                 : 0.0;
 
 
+
             static decimal AverageScore(
                 NFD_Enrollment enrollment,
                 NFD_EvaluationType type)
@@ -158,12 +159,27 @@ namespace Nafadh_Backend.Repositories
                     : 0.0;
             }
 
+            static int GetPerformanceEvaluationCount(
+                NFD_Enrollment enrollment)
+            {
+                return enrollment.Evaluations.Count(e =>
+                    e.Score > 0 &&
+                    e.EvaluationTemplate != null &&
+                    (
+                        e.EvaluationTemplate.Type == NFD_EvaluationType.Technical ||
+                        e.EvaluationTemplate.Type == NFD_EvaluationType.Behavioral ||
+                        e.EvaluationTemplate.Type == NFD_EvaluationType.Final
+                    ));
+            }
+
             static double GetAttendance(NFD_Enrollment enrollment)
             {
                 var records = enrollment.DailyAttendances;
+
                 return records.Count > 0
                     ? Math.Round(
-                        records.Count(a => a.Status == NFD_AttendanceStatus.Present)
+                        records.Count(a =>
+                            a.Status == NFD_AttendanceStatus.Present)
                         * 100.0 / records.Count, 1)
                     : 0.0;
             }
@@ -173,9 +189,14 @@ namespace Nafadh_Backend.Repositories
                 {
                     Enrollment = e,
                     Performance = GetPerformance(e),
+                    PerformanceEvaluationCount =
+                        GetPerformanceEvaluationCount(e),
                     Attendance = GetAttendance(e)
                 })
                 .ToList();
+
+
+
 
             var topPerformers = traineeStats
                 .Where(x => x.Performance >= 80 && x.Attendance >= 90)
@@ -198,7 +219,7 @@ namespace Nafadh_Backend.Repositories
             var atRiskTrainees = traineeStats
                 .Where(x =>
                       (x.Enrollment.DailyAttendances.Count > 0 && x.Attendance < 80) ||
-                      (x.Enrollment.Evaluations.Count >= 2 && x.Performance < 60))
+                      (x.PerformanceEvaluationCount >= 2 && x.Performance < 60))
                 .OrderBy(x => x.Attendance)
                 .ThenBy(x => x.Performance)
                 .Select(x => new AdminDashboardTraineeDTO
