@@ -193,8 +193,8 @@ namespace Nafadh_Backend.Repositories
 
             var atRiskTrainees = traineeStats
                 .Where(x =>
-                    x.Enrollment.DailyAttendances.Count > 0
-                    && (x.Attendance < 80 || x.Performance < 60))
+                      (x.Enrollment.DailyAttendances.Count > 0 && x.Attendance < 80) ||
+                      (x.Enrollment.Evaluations.Count >= 2 && x.Performance < 60))
                 .OrderBy(x => x.Attendance)
                 .ThenBy(x => x.Performance)
                 .Select(x => new AdminDashboardTraineeDTO
