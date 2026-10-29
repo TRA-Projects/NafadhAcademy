@@ -125,29 +125,11 @@ namespace Nafadh_Backend.Repositories
                     * 100.0 / allAttendance.Count, 1)
                 : 0.0;
 
-            static decimal AverageScore(
-                NFD_Enrollment enrollment,
-                NFD_EvaluationType type)
-            {
-                var scores = enrollment.Evaluations
-                    .Where(e => e.EvaluationTemplate != null
-                        && e.EvaluationTemplate.Type == type)
-                    .Select(e => e.Score)
-                    .ToList();
-
-                return scores.Count > 0 ? scores.Average() : 0m;
-            }
-
             static double GetPerformance(NFD_Enrollment enrollment)
             {
-                var scores = new[]
-                {
-                    AverageScore(enrollment, NFD_EvaluationType.Technical),
-                    AverageScore(enrollment, NFD_EvaluationType.Behavioral),
-                    AverageScore(enrollment, NFD_EvaluationType.Final)
-                }
-                .Where(score => score > 0)
-                .ToList();
+                var scores = enrollment.Evaluations
+                    .Select(e => e.Score)
+                    .ToList();
 
                 return scores.Count > 0
                     ? Math.Round((double)scores.Average(), 1)
