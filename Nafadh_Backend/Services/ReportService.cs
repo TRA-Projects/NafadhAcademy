@@ -2160,6 +2160,12 @@ namespace Nafadh_Backend.Services
         }
 
 
+        // Delegates admin dashboard summary retrieval to the report repository.
+        public Task<AdminDashboardSummaryDTO> GetAdminDashboardSummaryAsync()
+        {
+            return _repository.GetAdminDashboardSummaryAsync();
+        }
+
         public Task<BatchPerformanceReportDTO?> GetBatchPerformanceAsync(
            int batchId, int pageNumber, int pageSize)
           => _repository.GetBatchPerformanceAsync(batchId, pageNumber, pageSize);
