@@ -13,14 +13,12 @@ namespace Nafadh_Backend.Repositories
     {
         // TODO: define data-access contract methods for this entity
         Task<List<NFD_Report>> GetReportsAsync(NFD_ReportType? type, int? userId);
-
-        // Retrieves summary metrics and dashboard lists from the database.
-        Task<AdminDashboardSummaryDTO> GetAdminDashboardSummaryAsync(); 
         Task AddReportAsync(NFD_Report report);
         Task<NFD_Report?> GetReportByIdAsync(int reportId);
 
         // NEW: analytics/aggregation queries — see DTOs/ReportAnalyticsDTOs.cs
         Task<DTOs.DashboardChartsDTO> GetDashboardChartsAsync();
+        Task<AdminDashboardSummaryDTO> GetAdminDashboardSummaryAsync();
         Task<BatchPerformanceReportDTO?> GetBatchPerformanceAsync(int batchId, int pageNumber, int pageSize);
         Task<DTOs.AttendanceReportDTO?> GetCompanyAttendanceReportAsync(int companyId);
         Task<List<DTOs.ChartPointDTO>> GetCompanyAttendanceChartAsync(int companyId);
