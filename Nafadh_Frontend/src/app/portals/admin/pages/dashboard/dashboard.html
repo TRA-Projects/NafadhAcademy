@@ -1070,15 +1070,8 @@
         <div class="chart-header">
           <div>
             <h3 class="chart-title">تقسيم المسارات</h3>
-            <p class="chart-subtitle">بناءً على السنة المختارة</p>
-          </div>
-          <select class="batch-select" [value]="selectedYear()" (change)="onYearChange($event)" aria-label="اختر السنة">
-            @for (year of availableYears(); track year) {
-              <option [value]="year">{{ year }}</option>
-            } @empty {
-              <option [value]="selectedYear()">{{ selectedYear() }}</option>
-            }
-          </select>
+<p class="chart-subtitle">توزيع جميع الدفعات حسب المسار</p>          </div>
+          
         </div>
         <div class="chart-body donut-body">
           <canvas id="tracksDonutChart"></canvas>
