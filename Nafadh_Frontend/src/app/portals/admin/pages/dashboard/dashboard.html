@@ -37,10 +37,16 @@
               <div class="tp-name-row">
                 <h1 class="tp-fullname">{{ tp.fullName }}</h1>
                 <span class="tp-status-badge"
-                      [class.tp-status-good]="tp.performancePercent >= 80 || tp.attendancePercent >= 80"
-                      [class.tp-status-risk]="tp.performancePercent < 80 && tp.attendancePercent < 80">
-                  {{ (tp.performancePercent >= 80 || tp.attendancePercent >= 80) ? 'متدرب متميز ومنتظم' : 'متعثر - بحاجة لمتابعة' }}
-                </span>
+      [class.tp-status-good]="(tp.performancePercent ?? -1) >= 80 || (tp.attendancePercent ?? -1) >= 80"
+      [class.tp-status-risk]="(tp.performancePercent ?? 101) < 80 && (tp.attendancePercent ?? 101) < 80">
+  {{
+    ((tp.performancePercent ?? -1) >= 80 || (tp.attendancePercent ?? -1) >= 80)
+      ? 'متدرب متميز ومنتظم'
+      : ((tp.performancePercent ?? 101) < 80 && (tp.attendancePercent ?? 101) < 80)
+        ? 'متعثر - بحاجة لمتابعة'
+        : 'بيانات غير مكتملة'
+  }}
+</span>
               </div>
               <div class="tp-info-line">
                 <span>🎓 {{ tp.university }}</span>
