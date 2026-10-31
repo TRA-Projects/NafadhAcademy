@@ -362,6 +362,11 @@ createEnrollment(dto: {
     return this.http.get<WarningDto[]>(`${this.base}/Warning`, { params: httpParams });
   }
 
+// جلب تفاصيل الإنذار كاملة من Backend بما فيها Evidence و Resolution.
+getWarningById(id: number): Observable<any> {
+  const cleanId = this.sanitizeId(id);
+  return this.http.get<any>(`${this.base}/Warning/${cleanId}`);
+}
   createWarning(dto: unknown) { return this.http.post(`${this.base}/Warning`, dto); }
   resolveWarning(id: number, dto: unknown) { return this.http.put(`${this.base}/Warning/${this.sanitizeId(id)}/resolve`, dto); }
 
