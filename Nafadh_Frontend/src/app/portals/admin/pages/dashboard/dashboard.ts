@@ -738,26 +738,23 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
         const excusedCount = attList.filter(a => String(a.status).toLowerCase().includes('excus') || a.status === 4).length;
 
         // فصل التقييمات الفنية والسلوكية حسب نوع نموذج التقييم في Backend.
-        const getAverageScore = (typeName: string): number | null => {
-          const scores = evalList
-            .filter((e: any) => {
-              const evaluationType =
-                e.evaluationTemplate?.type ??
-                e.evaluationTemplateType ??
-                e.templateType ??
-                e.type;
+       const getAverageScore = (typeName: string): number | null => {
+  const scores = evalList
+    .filter((e: any) =>
+      String(e.templateType ?? '').toLowerCase() === typeName.toLowerCase()
+      && e.score !== null
+      && e.score !== undefined
+    )
+    .map((e: any) => Number(e.score))
+    .filter((score: number) => Number.isFinite(score));
 
-              return String(evaluationType).toLowerCase() === typeName.toLowerCase()
-                && e.score !== null
-                && e.score !== undefined;
-            })
-            .map((e: any) => Number(e.score))
-            .filter((score: number) => Number.isFinite(score));
-
-          return scores.length
-            ? Math.round(scores.reduce((sum: number, score: number) => sum + score, 0) / scores.length * 10) / 10
-            : null;
-        };
+  return scores.length
+    ? Math.round(
+        scores.reduce((sum: number, score: number) => sum + score, 0)
+        / scores.length * 10
+      ) / 10
+    : null;
+};
 
         const technicalScore = getAverageScore('Technical');
         const behavioralScore = getAverageScore('Behavioral');
