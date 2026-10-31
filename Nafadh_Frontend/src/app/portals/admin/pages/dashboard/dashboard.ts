@@ -491,7 +491,6 @@ this.api.getDashboardCharts().pipe(
         if (!years.includes(this.selectedYear())) {
           this.selectedYear.set(years[0]);
         }
-        this.updateDonutChartData();
       }
 
       // مصدر أرقام ومؤشرات لوحة الإدارة هو ملخص Backend فقط؛ لا نستبدل القيم بحسابات محلية.
