@@ -648,17 +648,25 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
       reason: string;
     }[] = [];
 
-    if (traineeItem?.warningId) {
-      const rawWarn = this.allWarningsCache().find((w: any) => (w.warningId ?? w.id) === traineeItem.warningId);
-      clickedWarningList.push({
-        warningId: traineeItem.warningId,
-        type: traineeItem.type || rawWarn?.type || 'Attendance',
-        level: traineeItem.level || rawWarn?.level || 'First',
-        status: traineeItem.status || rawWarn?.status || 'Active',
-        date: (traineeItem.issuedDate || rawWarn?.issuedDate || new Date().toISOString()).slice(0, 10),
-        reason: rawWarn?.evidence || rawWarn?.resolution || `إنذار مسجل بنوع (${traineeItem.type || 'Attendance'}) في منظومة المتابعة والالتزام.`
-      });
-    }
+   // Add warning details only when they exist in backend data.
+if (traineeItem?.warningId) {
+  const rawWarn = this.allWarningsCache().find(
+    (w: any) => Number(w.warningId ?? w.id) === Number(traineeItem.warningId)
+  );
+
+  if (rawWarn) {
+    clickedWarningList.push({
+      warningId: Number(rawWarn.warningId ?? rawWarn.id),
+      type: rawWarn.type ?? '—',
+      level: rawWarn.level ?? '—',
+      status: rawWarn.status ?? '—',
+      date: rawWarn.issuedDate
+        ? String(rawWarn.issuedDate).slice(0, 10)
+        : '—',
+      reason: rawWarn.evidence ?? rawWarn.resolution ?? '—'
+    });
+  }
+}
 
     // Build trainee profile using only available real data; avoid fabricated defaults.
     const initialView: SelectedTraineeDetailView = {
