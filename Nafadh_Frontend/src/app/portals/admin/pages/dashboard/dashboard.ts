@@ -526,70 +526,84 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  openWarningPreview(w: any) {
-    const warningId = w?.warningId ?? w?.id ?? 0;
-    const rawFromCache = this.allWarningsCache().find((item: any) => (item.warningId ?? item.id) === warningId) || w;
-    const targetName = w?.targetName || rawFromCache?.companyName || 'شركة مستضيفة معتمدة';
+ // Load the selected warning details directly from the backend.
+openWarningPreview(w: any): void {
+  const warningId = Number(w?.warningId ?? w?.id);
 
-    const matchedCompany = this.allCompaniesCache().find((c: any) =>
-      (w?.companyId && (c.companyId ?? c.id) === w.companyId) ||
-      c.companyName === targetName ||
-      c.name === targetName
-    ) || {};
+  if (!warningId) {
+    return;
+  }
 
-    const countForTarget = this.allWarningsCache().filter((item: any) =>
-      (w?.companyId && item.companyId === w.companyId) ||
-      item.companyName === targetName ||
-      item.targetName === targetName
-    ).length || 1;
+  this.selectedTraineeProfile.set(null);
+  this.showAllTopPerformersPage.set(false);
+  this.showAllAtRiskPage.set(false);
 
-    const typeRaw = String(w?.type || rawFromCache?.type || 'Performance');
-    const levelRaw = String(w?.level || rawFromCache?.level || 'First');
-    const statusRaw = String(w?.status || rawFromCache?.status || 'Active');
+  this.isProfileLoading.set(true);
+
+  this.api.getWarningById(warningId).pipe(
+    catchError(() => of(null))
+  ).subscribe((warning: any) => {
+    this.isProfileLoading.set(false);
+
+    if (!warning) {
+      this.selectedWarningDetail.set(null);
+      return;
+    }
+
+    const typeRaw = String(warning.type ?? '');
+    const levelRaw = String(warning.level ?? '');
+    const statusRaw = String(warning.status ?? '');
 
     const typeArabic = typeRaw.toLowerCase().includes('attend')
       ? 'التزام الحضور والمتابعة (Attendance)'
       : typeRaw.toLowerCase().includes('behav')
         ? 'الانضباط والالتزام التنظيمي (Behavioral)'
-        : 'مستوى الأداء وجودة التدريب (Performance)';
+        : typeRaw.toLowerCase().includes('performance')
+          ? 'مستوى الأداء وجودة التدريب (Performance)'
+          : typeRaw || '—';
 
-    const levelArabic = levelRaw.toLowerCase().includes('second') || levelRaw === '2'
-      ? 'الإنذار الثاني (Second Warning)'
-      : levelRaw.toLowerCase().includes('final') || levelRaw.toLowerCase().includes('third') || levelRaw === '3'
-        ? 'إنذار نهائي (Final Warning)'
-        : 'الإنذار الأول (First Warning)';
+    const levelArabic =
+      levelRaw.toLowerCase().includes('low') ? 'منخفض' :
+      levelRaw.toLowerCase().includes('medium') ? 'متوسط' :
+      levelRaw.toLowerCase().includes('high') ? 'مرتفع' :
+      levelRaw.toLowerCase().includes('critical') ? 'حرج' :
+      levelRaw || '—';
 
-    const statusArabic = statusRaw.toLowerCase().includes('resolv') || statusRaw.toLowerCase().includes('clos')
-      ? 'تمت المعالجة والتسوية (Resolved)'
-      : 'نشط - قيد المتابعة (Active)';
+    const statusArabic =
+      statusRaw.toLowerCase().includes('resolved') ? 'تمت المعالجة' :
+      statusRaw.toLowerCase().includes('underreview') ? 'قيد المراجعة' :
+      statusRaw.toLowerCase().includes('escalated') ? 'تم التصعيد' :
+      statusRaw.toLowerCase().includes('open') ? 'مفتوح' :
+      statusRaw || '—';
 
-    this.selectedTraineeProfile.set(null);
-    this.showAllTopPerformersPage.set(false);
-    this.showAllAtRiskPage.set(false);
+    const targetName = warning.targetName || '—';
 
     this.selectedWarningDetail.set({
-      warningId,
-      scope: 'Company',
+      warningId: warning.warningId,
+      scope: String(warning.scope ?? ''),
       targetName,
-      companyId: w?.companyId || matchedCompany?.companyId || matchedCompany?.id,
-      type: typeRaw,
+      companyId: warning.companyId ?? undefined,
+      type: typeRaw || '—',
       typeArabic,
-      level: levelRaw,
+      level: levelRaw || '—',
       levelArabic,
-      status: statusRaw,
+      status: statusRaw || '—',
       statusArabic,
-      issuedDate: (w?.issuedDate || rawFromCache?.issuedDate || new Date().toISOString()).slice(0, 10),
-      evidence: rawFromCache?.evidence || rawFromCache?.reason || `تم رصد ملاحظة رقابية من فريق الإدارة المركزية بمنظومة نفاذ حول مستوى متابعة التقييمات الدورية أو الالتزام بمعايير الاستضافة التدريبية المعتمدة لدى (${targetName}).`,
-      resolution: rawFromCache?.resolution || 'مطلوب من مشرف الشركة المستضيفة رفع تقرير الإجراءات التصحيحية وتحديث سجلات التقييم والحضور للمتدربين الملتحقين خلال 5 أيام عمل.',
-      companyCapacity: Number(matchedCompany?.capacity ?? matchedCompany?.Capacity ?? 85),
-      companyContact: matchedCompany?.contactPerson || matchedCompany?.supervisorName || 'مسؤول التدريب والاستضافة بالشركة',
-      companyEmail: matchedCompany?.email || matchedCompany?.contactEmail || 'compliance@company.om',
-      companyLocation: matchedCompany?.location || matchedCompany?.city || 'سلطنة عُمان - مسقط',
-      totalWarningsForTarget: countForTarget
+      issuedDate: warning.issuedDate
+        ? String(warning.issuedDate).slice(0, 10)
+        : '—',
+      evidence: warning.evidence || 'لا توجد تفاصيل مسجلة',
+      resolution: warning.resolution || 'لم يتم تسجيل إجراء المعالجة',
+      companyCapacity: 0,
+      companyContact: '—',
+      companyEmail: '—',
+      companyLocation: '—',
+      totalWarningsForTarget: 0
     });
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
+  });
+}
 
   closeWarningPreview() {
     this.selectedWarningDetail.set(null);
