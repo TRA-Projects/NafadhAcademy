@@ -705,9 +705,13 @@ const initialView: SelectedTraineeDetailView = {
       const firstEnr = enrList[0] || {};
       const enrollmentId = firstEnr.enrollmentId || initialView.enrollmentId;
 
-      const skillsArr = profile?.skills
-        ? String(profile.skills).split(/[,،|]/).map((s: string) => s.trim()).filter(Boolean)
-        : initialView.skills;
+      // Read trainee skills without creating fallback sample data.
+const skillsArr = profile?.skills
+  ? String(profile.skills)
+      .split(/[,،|]/)
+      .map((s: string) => s.trim())
+      .filter(Boolean)
+  : (initialView.skills ?? []);
 
       const matchedBatch = this.allBatches().find((b: any) => (b.batchId ?? b.id) === firstEnr.batchId);
 
@@ -772,8 +776,7 @@ const initialView: SelectedTraineeDetailView = {
           lateDays: attList.length > 0 ? lateCount : initialView.lateDays,
           excusedDays: attList.length > 0 ? excusedCount : initialView.excusedDays,
           trainerNotes: evalNotes,
-          skills: skillsArr.length > 0 ? skillsArr : initialView.skills,
-          gitHubUrl: this.getSafeGitHubUrl(profile?.gitHubUrl || initialView.gitHubUrl, fullName),
+skills: skillsArr.length > 0 ? skillsArr : (initialView.skills ?? [])          gitHubUrl: this.getSafeGitHubUrl(profile?.gitHubUrl || initialView.gitHubUrl, fullName),
           linkedInUrl: this.getSafeLinkedInUrl(profile?.linkedInUrl || initialView.linkedInUrl, fullName),
           warnings: finalWarnings
         });
