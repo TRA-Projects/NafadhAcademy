@@ -776,10 +776,17 @@ const skillsArr = profile?.skills
           lateDays: attList.length > 0 ? lateCount : initialView.lateDays,
           excusedDays: attList.length > 0 ? excusedCount : initialView.excusedDays,
           trainerNotes: evalNotes,
-skills: skillsArr.length > 0 ? skillsArr : (initialView.skills ?? [])          gitHubUrl: this.getSafeGitHubUrl(profile?.gitHubUrl || initialView.gitHubUrl, fullName),
-          linkedInUrl: this.getSafeLinkedInUrl(profile?.linkedInUrl || initialView.linkedInUrl, fullName),
-          warnings: finalWarnings
-        });
+skills: skillsArr,
+gitHubUrl: this.getSafeGitHubUrl(
+  profile?.gitHubUrl || initialView.gitHubUrl,
+  fullName
+),
+linkedInUrl: this.getSafeLinkedInUrl(
+  profile?.linkedInUrl || initialView.linkedInUrl,
+  fullName
+),
+warnings: finalWarnings
+});
 
         this.isProfileLoading.set(false);
       });
