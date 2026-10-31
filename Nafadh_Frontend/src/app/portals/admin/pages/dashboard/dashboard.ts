@@ -833,15 +833,14 @@ if (traineeItem?.warningId) {
     this.showAllAtRiskPage.set(false);
   }
 
-  getSafeGitHubUrl(url?: string, name?: string): string {
-    if (url && url.startsWith('http')) return url;
-    return 'https://github.com/';
-  }
+  // Return social links only when valid URLs exist in backend data.
+getSafeGitHubUrl(url?: string): string {
+  return url && url.startsWith('https://') ? url : '';
+}
 
-  getSafeLinkedInUrl(url?: string, name?: string): string {
-    if (url && url.startsWith('http')) return url;
-    return 'https://www.linkedin.com/';
-  }
+getSafeLinkedInUrl(url?: string): string {
+  return url && url.startsWith('https://') ? url : '';
+}
 
   ngAfterViewInit() {
     this.initBarChart();
