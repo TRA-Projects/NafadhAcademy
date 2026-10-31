@@ -445,16 +445,16 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
     });
 
     // Load dashboard charts from backend and update both chart types.
-this.api.getDashboardCharts().pipe(
-  catchError(() => of(null))
-).subscribe((c: any) => {
-  this.charts.set(c);
+    this.api.getDashboardCharts().pipe(
+      catchError(() => of(null))
+    ).subscribe((c: any) => {
+      this.charts.set(c);
 
-  if (c) {
-    this.updateBarChartData(c);
-    this.updateDonutChartData();
-  }
-});
+      if (c) {
+        this.updateBarChartData(c);
+        this.updateDonutChartData();
+      }
+    });
 
     forkJoin({
       traineesRes: this.api.getTrainees({ page: 1, pageSize: 2000, _t: cacheBuster }).pipe(catchError(() => of({ items: [], totalCount: 0 }))),
@@ -631,14 +631,14 @@ this.api.getDashboardCharts().pipe(
 
     const traineeId = traineeItem?.traineeId || cachedTrainee?.traineeId || cachedTrainee?.id || 0;
     const fullName = candidateName || cachedTrainee?.fullName || 'متدرب المنظومة';
-    const perf = Number(traineeItem?.performancePercent ?? 82);
-    const att = Number(traineeItem?.attendancePercent ?? 78);
+    // Use only performance and attendance values received from the backend.
+    const perf = traineeItem?.performancePercent != null
+      ? Number(traineeItem.performancePercent)
+      : undefined;
 
-    const defaultAge = 22 + ((traineeId || index + 1) % 4);
-    const totalDays = 60;
-    const estPresent = Math.round((att / 100) * totalDays);
-    const estAbsent = Math.max(0, totalDays - estPresent - 2);
-
+    const att = traineeItem?.attendancePercent != null
+      ? Number(traineeItem.attendancePercent)
+      : undefined;
     const clickedWarningList: {
       warningId: number;
       type: string;
@@ -836,13 +836,13 @@ this.api.getDashboardCharts().pipe(
   }
 
   ngAfterViewInit() {
-  this.initBarChart();
-  this.initDonutChart();
+    this.initBarChart();
+    this.initDonutChart();
 
-  // Apply backend chart data after chart instances are initialized.
-  this.updateBarChartData(this.charts());
-  this.updateDonutChartData();
-}
+    // Apply backend chart data after chart instances are initialized.
+    this.updateBarChartData(this.charts());
+    this.updateDonutChartData();
+  }
 
   ngOnDestroy() {
     if (this.barChartInstance) this.barChartInstance.destroy();
