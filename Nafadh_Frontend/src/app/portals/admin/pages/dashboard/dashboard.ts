@@ -649,44 +649,36 @@ openWarningPreview(w: any): void {
       });
     }
 
-    const initialView: SelectedTraineeDetailView = {
-      traineeId,
-      enrollmentId: traineeItem?.enrollmentId || (traineeId + 100),
-      fullName,
-      initials: this.getInitials(fullName),
-      avatarColor: this.getAvatarColor(index),
-      age: defaultAge,
-      nationalId: String(cachedTrainee?.nationalId || (108000000 + (traineeId || 7) * 137)),
-      university: cachedTrainee?.university || 'جامعة السلطان قابوس',
-      major: traineeItem?.major || cachedTrainee?.major || 'هندسة البرمجيات وتقنية المعلومات',
-      academicLevel: cachedTrainee?.academicLevel || 'بكالوريوس',
-      email: cachedTrainee?.email || `trainee.${traineeId || 10}@nafadh.om`,
-      phone: cachedTrainee?.phone || `+968 9${4000000 + ((traineeId || 5) * 123) % 5000000}`,
-      trackName: cachedTrainee?.trackName || 'Data & AI / Software Track',
-      programName: cachedTrainee?.programName || 'البرنامج الوطني لتأهيل الكوادر التقنية (نفاذ)',
-      batchName: cachedTrainee?.batchName || `دفعة ${this.selectedYear()} التدريبية`,
-      companyName: traineeItem?.companyName || cachedTrainee?.companyName || 'مجموعة أفق التقنية',
-      supervisorName: 'مشرف التدريب الميداني بالشركة',
-      trainerName: 'المدرب المعتمد بالمسار',
-      performancePercent: perf,
-      technicalScore: Math.min(100, Math.round((perf + 1.5) * 10) / 10),
-      behavioralScore: Math.min(100, Math.round((perf - 1.0) * 10) / 10),
-      moduleProgressPercent: Math.min(100, Math.max(35, Math.round(perf))),
-      attendancePercent: att,
-      presentDays: estPresent,
-      absentDays: estAbsent,
-      lateDays: att < 80 ? 5 : 1,
-      excusedDays: 1,
-      trainerNotes: att >= 80
-        ? `المتدرب (${fullName}) يتميز بمستوى عالٍ من الالتزام بالحضور والمشاركة الفعالة في تطبيق المهام العملية والمشاريع التدريبية داخل المسار والشركة المستضيفة.`
-        : `يحتاج المتدرب (${fullName}) إلى متابعة دورية لرفع نسبة الحضور الأسبوعي والالتزام بتسليم التكليفات العملية في مواعيدها المحددة.`,
-      lastEvaluationDate: new Date().toISOString().slice(0, 10),
-      skills: ['C# & .NET', 'Angular', 'SQL Server', 'Git & GitHub', 'تحليل النظم', 'العمل الجماعي'],
-      gitHubUrl: this.getSafeGitHubUrl(traineeItem?.gitHubUrl || cachedTrainee?.gitHubUrl, fullName),
-      linkedInUrl: this.getSafeLinkedInUrl(traineeItem?.linkedInUrl || cachedTrainee?.linkedInUrl, fullName),
-      resumeUrl: cachedTrainee?.resumeUrl,
-      warnings: clickedWarningList
-    };
+    // Build trainee profile using only available real data; avoid fabricated defaults.
+const initialView: SelectedTraineeDetailView = {
+  traineeId,
+  enrollmentId: traineeItem?.enrollmentId ?? cachedTrainee?.enrollmentId,
+  fullName,
+  initials: this.getInitials(fullName),
+  avatarColor: this.getAvatarColor(index),
+  nationalId: cachedTrainee?.nationalId ?? '',
+  university: cachedTrainee?.university ?? '—',
+  major: traineeItem?.major ?? cachedTrainee?.major ?? '—',
+  academicLevel: cachedTrainee?.academicLevel ?? '—',
+  email: cachedTrainee?.email ?? '—',
+  phone: cachedTrainee?.phone ?? '—',
+  trackName: cachedTrainee?.trackName ?? '—',
+  programName: cachedTrainee?.programName ?? '—',
+  batchName: cachedTrainee?.batchName ?? '—',
+  companyName: traineeItem?.companyName ?? cachedTrainee?.companyName ?? '—',
+  performancePercent: perf,
+  attendancePercent: att,
+  gitHubUrl: this.getSafeGitHubUrl(
+    traineeItem?.gitHubUrl || cachedTrainee?.gitHubUrl,
+    fullName
+  ),
+  linkedInUrl: this.getSafeLinkedInUrl(
+    traineeItem?.linkedInUrl || cachedTrainee?.linkedInUrl,
+    fullName
+  ),
+  resumeUrl: cachedTrainee?.resumeUrl,
+  warnings: clickedWarningList
+};
 
     this.selectedTraineeProfile.set(initialView);
     this.isProfileLoading.set(true);
