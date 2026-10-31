@@ -791,16 +791,14 @@ reason: w.evidence ?? w.resolution ?? '—'
           excusedDays: attList.length > 0 ? excusedCount : initialView.excusedDays,
           trainerNotes: evalNotes,
           skills: skillsArr,
-          gitHubUrl: this.getSafeGitHubUrl(
-            profile?.gitHubUrl || initialView.gitHubUrl,
-            fullName
-          ),
-          linkedInUrl: this.getSafeLinkedInUrl(
-            profile?.linkedInUrl || initialView.linkedInUrl,
-            fullName
-          ),
-          warnings: finalWarnings
-        });
+       gitHubUrl: this.getSafeGitHubUrl(
+  profile?.gitHubUrl || initialView.gitHubUrl
+),
+linkedInUrl: this.getSafeLinkedInUrl(
+  profile?.linkedInUrl || initialView.linkedInUrl
+),
+warnings: finalWarnings
+});
 
         this.isProfileLoading.set(false);
       });
