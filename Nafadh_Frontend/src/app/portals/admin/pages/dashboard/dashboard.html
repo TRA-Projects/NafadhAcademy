@@ -235,27 +235,27 @@
               <span class="tp-trainer-badge">الإجمالي: {{ tp.warnings.length }}</span>
             </div>
 
-            @if (tp.warnings.length === 0) {
-            <div class="tp-clean-record">
-              <span>✅</span>
-              <span>لا توجد أي إنذارات سابقة مسجلة على المتدرب ({{ tp.fullName }}) — سجل التزام ممتاز.</span>
-            </div>
-            } @else {
-            <div class="tp-warnings-list">
-              @for (w of tp.warnings; track w.warningId) {
-              <div class="tp-warn-item">
-                <div>
-                  <div class="tp-warn-title">{{ w.type }} · المستوى: {{ w.level }}</div>
-                  <div class="tp-warn-reason">{{ w.reason }}</div>
-                </div>
-                <div class="tp-warn-date">
-                  <div>{{ w.date }}</div>
-                  <strong>#{{ w.warningId }}</strong>
-                </div>
-              </div>
-              }
-            </div>
-            }
+          @if (tp.warnings.length === 0) {
+  <div class="tp-clean-record">
+    <span>✅</span>
+    <span>لا توجد أي إنذارات سابقة مسجلة على المتدرب ({{ tp.fullName }}) — سجل التزام ممتاز.</span>
+  </div>
+} @else {
+  <div class="tp-warnings-list">
+    @for (w of tp.warnings; track w.warningId) {
+      <div class="tp-warn-item">
+        <div>
+          <div class="tp-warn-title">{{ w.type }} · المستوى: {{ w.level }}</div>
+          <div class="tp-warn-reason">{{ w.reason }}</div>
+        </div>
+        <div class="tp-warn-date">
+          <div>{{ w.date }}</div>
+          <strong>#{{ w.warningId }}</strong>
+        </div>
+      </div>
+    }
+  </div>
+}
           </div>
         </div>
 
