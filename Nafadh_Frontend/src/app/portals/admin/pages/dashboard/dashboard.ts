@@ -837,12 +837,13 @@ this.api.getDashboardCharts().pipe(
   }
 
   ngAfterViewInit() {
-    this.initBarChart();
-    this.initDonutChart();
-    // تطبيق بيانات API حتى لو وصلت قبل إنشاء عنصر الرسم.
-    this.updateBarChartData(this.charts());
-    this.updateDonutChartData();
-  }
+  this.initBarChart();
+  this.initDonutChart();
+
+  // Apply backend chart data after chart instances are initialized.
+  this.updateBarChartData(this.charts());
+  this.updateDonutChartData();
+}
 
   ngOnDestroy() {
     if (this.barChartInstance) this.barChartInstance.destroy();
