@@ -65,38 +65,45 @@ export interface AdminDashboardSummary {
 
 export interface SelectedTraineeDetailView {
   traineeId: number;
-  enrollmentId: number;
+  enrollmentId?: number;
   fullName: string;
   initials: string;
   avatarColor: string;
-  age: number;
-  nationalId: string;
-  university: string;
-  major: string;
-  academicLevel: string;
-  email: string;
-  phone: string;
-  trackName: string;
-  programName: string;
-  batchName: string;
-  companyName: string;
-  supervisorName: string;
-  trainerName: string;
-  performancePercent: number;
-  technicalScore: number;
-  behavioralScore: number;
-  moduleProgressPercent: number;
-  attendancePercent: number;
-  presentDays: number;
-  absentDays: number;
-  lateDays: number;
-  excusedDays: number;
-  trainerNotes: string;
-  lastEvaluationDate: string;
-  skills: string[];
-  gitHubUrl: string;
-  linkedInUrl: string;
+
+  age?: number;
+  nationalId?: string;
+  university?: string;
+  major?: string;
+  academicLevel?: string;
+  email?: string;
+  phone?: string;
+
+  trackName?: string;
+  programName?: string;
+  batchName?: string;
+  companyName?: string;
+  supervisorName?: string;
+  trainerName?: string;
+
+  performancePercent?: number;
+  technicalScore?: number;
+  behavioralScore?: number;
+  moduleProgressPercent?: number;
+  attendancePercent?: number;
+
+  presentDays?: number;
+  absentDays?: number;
+  lateDays?: number;
+  excusedDays?: number;
+
+  trainerNotes?: string;
+  lastEvaluationDate?: string;
+  skills?: string[];
+
+  gitHubUrl?: string;
+  linkedInUrl?: string;
   resumeUrl?: string;
+
   warnings: {
     warningId: number;
     type: string;
