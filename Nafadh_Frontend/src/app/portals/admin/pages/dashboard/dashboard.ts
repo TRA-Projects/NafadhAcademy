@@ -759,9 +759,14 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
         const technicalScore = getAverageScore('Technical');
         const behavioralScore = getAverageScore('Behavioral');
 
-        const latestEval = evalList[0];
-        const evalNotes = latestEval?.feedback || latestEval?.notes || latestEval?.comment || initialView.trainerNotes;
-        const evalTrainer = latestEval?.trainerName || firstEnr?.trainerName || initialView.trainerName;
+        const latestEval = [...evalList].sort(
+  (a: any, b: any) =>
+    new Date(b.evaluationDate).getTime() -
+    new Date(a.evaluationDate).getTime()
+)[0];
+
+const evalNotes = latestEval?.notes || initialView.trainerNotes;
+const evalTrainer = latestEval?.trainerName || firstEnr?.trainerName || initialView.trainerName;
         const traineeWarnings = this.allWarningsCache()
           .filter((w: any) =>
             w.traineeId === traineeId ||
