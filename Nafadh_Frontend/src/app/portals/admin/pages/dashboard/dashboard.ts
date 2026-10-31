@@ -648,25 +648,25 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
       reason: string;
     }[] = [];
 
-   // Add warning details only when they exist in backend data.
-if (traineeItem?.warningId) {
-  const rawWarn = this.allWarningsCache().find(
-    (w: any) => Number(w.warningId ?? w.id) === Number(traineeItem.warningId)
-  );
+    // Add warning details only when they exist in backend data.
+    if (traineeItem?.warningId) {
+      const rawWarn = this.allWarningsCache().find(
+        (w: any) => Number(w.warningId ?? w.id) === Number(traineeItem.warningId)
+      );
 
-  if (rawWarn) {
-    clickedWarningList.push({
-      warningId: Number(rawWarn.warningId ?? rawWarn.id),
-      type: rawWarn.type ?? '—',
-      level: rawWarn.level ?? '—',
-      status: rawWarn.status ?? '—',
-      date: rawWarn.issuedDate
-        ? String(rawWarn.issuedDate).slice(0, 10)
-        : '—',
-      reason: rawWarn.evidence ?? rawWarn.resolution ?? '—'
-    });
-  }
-}
+      if (rawWarn) {
+        clickedWarningList.push({
+          warningId: Number(rawWarn.warningId ?? rawWarn.id),
+          type: rawWarn.type ?? '—',
+          level: rawWarn.level ?? '—',
+          status: rawWarn.status ?? '—',
+          date: rawWarn.issuedDate
+            ? String(rawWarn.issuedDate).slice(0, 10)
+            : '—',
+          reason: rawWarn.evidence ?? rawWarn.resolution ?? '—'
+        });
+      }
+    }
 
     // Build trainee profile using only available real data; avoid fabricated defaults.
     const initialView: SelectedTraineeDetailView = {
@@ -689,11 +689,9 @@ if (traineeItem?.warningId) {
       attendancePercent: att,
       gitHubUrl: this.getSafeGitHubUrl(
         traineeItem?.gitHubUrl || cachedTrainee?.gitHubUrl,
-        fullName
       ),
       linkedInUrl: this.getSafeLinkedInUrl(
         traineeItem?.linkedInUrl || cachedTrainee?.linkedInUrl,
-        fullName
       ),
       resumeUrl: cachedTrainee?.resumeUrl,
       warnings: clickedWarningList
@@ -753,12 +751,12 @@ if (traineeItem?.warningId) {
           .map((w: any) => ({
             warningId: w.warningId ?? w.id ?? 0,
             type: w.type ?? '—',
-level: w.level ?? '—',
-status: w.status ?? '—',
-date: w.issuedDate || w.createdAt
-  ? String(w.issuedDate || w.createdAt).slice(0, 10)
-  : '—',
-reason: w.evidence ?? w.resolution ?? '—'
+            level: w.level ?? '—',
+            status: w.status ?? '—',
+            date: w.issuedDate || w.createdAt
+              ? String(w.issuedDate || w.createdAt).slice(0, 10)
+              : '—',
+            reason: w.evidence ?? w.resolution ?? '—'
           }));
 
         const finalWarnings = [...traineeWarnings];
@@ -791,14 +789,14 @@ reason: w.evidence ?? w.resolution ?? '—'
           excusedDays: attList.length > 0 ? excusedCount : initialView.excusedDays,
           trainerNotes: evalNotes,
           skills: skillsArr,
-       gitHubUrl: this.getSafeGitHubUrl(
-  profile?.gitHubUrl || initialView.gitHubUrl
-),
-linkedInUrl: this.getSafeLinkedInUrl(
-  profile?.linkedInUrl || initialView.linkedInUrl
-),
-warnings: finalWarnings
-});
+          gitHubUrl: this.getSafeGitHubUrl(
+            profile?.gitHubUrl || initialView.gitHubUrl
+          ),
+          linkedInUrl: this.getSafeLinkedInUrl(
+            profile?.linkedInUrl || initialView.linkedInUrl
+          ),
+          warnings: finalWarnings
+        });
 
         this.isProfileLoading.set(false);
       });
@@ -834,13 +832,13 @@ warnings: finalWarnings
   }
 
   // Return social links only when valid URLs exist in backend data.
-getSafeGitHubUrl(url?: string): string {
-  return url && url.startsWith('https://') ? url : '';
-}
+  getSafeGitHubUrl(url?: string): string {
+    return url && url.startsWith('https://') ? url : '';
+  }
 
-getSafeLinkedInUrl(url?: string): string {
-  return url && url.startsWith('https://') ? url : '';
-}
+  getSafeLinkedInUrl(url?: string): string {
+    return url && url.startsWith('https://') ? url : '';
+  }
 
   ngAfterViewInit() {
     this.initBarChart();
