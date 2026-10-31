@@ -22,7 +22,7 @@ export interface AdminDashboardSummary {
     used: number;
     remaining: number;
   };
-  
+
   attendanceWeeks: { label: string; value: number }[];
   companyDistribution: { label: string; value: number }[];
   programDistribution: { label: string; value: number }[];
@@ -188,7 +188,7 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
     // 1. البحث النصي (اسم، برنامج، شركة)
     const q = this.topSearchQuery().trim().toLowerCase();
     if (q) {
-      list = list.filter(t => 
+      list = list.filter(t =>
         (t.fullName && t.fullName.toLowerCase().includes(q)) ||
         (t.major && t.major.toLowerCase().includes(q)) ||
         (t.companyName && t.companyName.toLowerCase().includes(q))
@@ -284,7 +284,7 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
     // 1. البحث النصي (اسم، تخصص، شركة)
     const q = this.riskSearchQuery().trim().toLowerCase();
     if (q) {
-      list = list.filter(t => 
+      list = list.filter(t =>
         (t.fullName && t.fullName.toLowerCase().includes(q)) ||
         (t.major && t.major.toLowerCase().includes(q)) ||
         (t.companyName && t.companyName.toLowerCase().includes(q))
@@ -420,7 +420,7 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
   constructor(
     private api: AdminApi,
     private router: Router
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.loadAllDashboardData();
@@ -486,8 +486,7 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
         if (!years.includes(this.selectedYear())) {
           this.selectedYear.set(years[0]);
         }
-        this.updateDonutChartData(this.selectedYear());
-      }
+this.updateDonutChartData();      }
 
       // مصدر أرقام ومؤشرات لوحة الإدارة هو ملخص Backend فقط؛ لا نستبدل القيم بحسابات محلية.
       const summaryData = adminSummary as AdminDashboardSummary | null;
@@ -533,84 +532,84 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
- // Load the selected warning details directly from the backend.
-openWarningPreview(w: any): void {
-  const warningId = Number(w?.warningId ?? w?.id);
+  // Load the selected warning details directly from the backend.
+  openWarningPreview(w: any): void {
+    const warningId = Number(w?.warningId ?? w?.id);
 
-  if (!warningId) {
-    return;
-  }
-
-  this.selectedTraineeProfile.set(null);
-  this.showAllTopPerformersPage.set(false);
-  this.showAllAtRiskPage.set(false);
-
-  this.isProfileLoading.set(true);
-
-  this.api.getWarningById(warningId).pipe(
-    catchError(() => of(null))
-  ).subscribe((warning: any) => {
-    this.isProfileLoading.set(false);
-
-    if (!warning) {
-      this.selectedWarningDetail.set(null);
+    if (!warningId) {
       return;
     }
 
-    const typeRaw = String(warning.type ?? '');
-    const levelRaw = String(warning.level ?? '');
-    const statusRaw = String(warning.status ?? '');
+    this.selectedTraineeProfile.set(null);
+    this.showAllTopPerformersPage.set(false);
+    this.showAllAtRiskPage.set(false);
 
-    const typeArabic = typeRaw.toLowerCase().includes('attend')
-      ? 'التزام الحضور والمتابعة (Attendance)'
-      : typeRaw.toLowerCase().includes('behav')
-        ? 'الانضباط والالتزام التنظيمي (Behavioral)'
-        : typeRaw.toLowerCase().includes('performance')
-          ? 'مستوى الأداء وجودة التدريب (Performance)'
-          : typeRaw || '—';
+    this.isProfileLoading.set(true);
 
-    const levelArabic =
-      levelRaw.toLowerCase().includes('low') ? 'منخفض' :
-      levelRaw.toLowerCase().includes('medium') ? 'متوسط' :
-      levelRaw.toLowerCase().includes('high') ? 'مرتفع' :
-      levelRaw.toLowerCase().includes('critical') ? 'حرج' :
-      levelRaw || '—';
+    this.api.getWarningById(warningId).pipe(
+      catchError(() => of(null))
+    ).subscribe((warning: any) => {
+      this.isProfileLoading.set(false);
 
-    const statusArabic =
-      statusRaw.toLowerCase().includes('resolved') ? 'تمت المعالجة' :
-      statusRaw.toLowerCase().includes('underreview') ? 'قيد المراجعة' :
-      statusRaw.toLowerCase().includes('escalated') ? 'تم التصعيد' :
-      statusRaw.toLowerCase().includes('open') ? 'مفتوح' :
-      statusRaw || '—';
+      if (!warning) {
+        this.selectedWarningDetail.set(null);
+        return;
+      }
 
-    const targetName = warning.targetName || '—';
+      const typeRaw = String(warning.type ?? '');
+      const levelRaw = String(warning.level ?? '');
+      const statusRaw = String(warning.status ?? '');
 
-    this.selectedWarningDetail.set({
-      warningId: warning.warningId,
-      scope: String(warning.scope ?? ''),
-      targetName,
-      companyId: warning.companyId ?? undefined,
-      type: typeRaw || '—',
-      typeArabic,
-      level: levelRaw || '—',
-      levelArabic,
-      status: statusRaw || '—',
-      statusArabic,
-      issuedDate: warning.issuedDate
-        ? String(warning.issuedDate).slice(0, 10)
-        : '—',
-      evidence: warning.evidence || 'لا توجد تفاصيل مسجلة',
-      resolution: warning.resolution || 'لم يتم تسجيل إجراء المعالجة',
-      companyCapacity: 0,
-      companyContact: '—',
-      companyEmail: '—',
-      companyLocation: '—',
-      totalWarningsForTarget: 0
+      const typeArabic = typeRaw.toLowerCase().includes('attend')
+        ? 'التزام الحضور والمتابعة (Attendance)'
+        : typeRaw.toLowerCase().includes('behav')
+          ? 'الانضباط والالتزام التنظيمي (Behavioral)'
+          : typeRaw.toLowerCase().includes('performance')
+            ? 'مستوى الأداء وجودة التدريب (Performance)'
+            : typeRaw || '—';
+
+      const levelArabic =
+        levelRaw.toLowerCase().includes('low') ? 'منخفض' :
+          levelRaw.toLowerCase().includes('medium') ? 'متوسط' :
+            levelRaw.toLowerCase().includes('high') ? 'مرتفع' :
+              levelRaw.toLowerCase().includes('critical') ? 'حرج' :
+                levelRaw || '—';
+
+      const statusArabic =
+        statusRaw.toLowerCase().includes('resolved') ? 'تمت المعالجة' :
+          statusRaw.toLowerCase().includes('underreview') ? 'قيد المراجعة' :
+            statusRaw.toLowerCase().includes('escalated') ? 'تم التصعيد' :
+              statusRaw.toLowerCase().includes('open') ? 'مفتوح' :
+                statusRaw || '—';
+
+      const targetName = warning.targetName || '—';
+
+      this.selectedWarningDetail.set({
+        warningId: warning.warningId,
+        scope: String(warning.scope ?? ''),
+        targetName,
+        companyId: warning.companyId ?? undefined,
+        type: typeRaw || '—',
+        typeArabic,
+        level: levelRaw || '—',
+        levelArabic,
+        status: statusRaw || '—',
+        statusArabic,
+        issuedDate: warning.issuedDate
+          ? String(warning.issuedDate).slice(0, 10)
+          : '—',
+        evidence: warning.evidence || 'لا توجد تفاصيل مسجلة',
+        resolution: warning.resolution || 'لم يتم تسجيل إجراء المعالجة',
+        companyCapacity: 0,
+        companyContact: '—',
+        companyEmail: '—',
+        companyLocation: '—',
+        totalWarningsForTarget: 0
+      });
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     });
-
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
-}
+  }
 
   closeWarningPreview() {
     this.selectedWarningDetail.set(null);
@@ -657,35 +656,35 @@ openWarningPreview(w: any): void {
     }
 
     // Build trainee profile using only available real data; avoid fabricated defaults.
-const initialView: SelectedTraineeDetailView = {
-  traineeId,
-  enrollmentId: traineeItem?.enrollmentId ?? cachedTrainee?.enrollmentId,
-  fullName,
-  initials: this.getInitials(fullName),
-  avatarColor: this.getAvatarColor(index),
-  nationalId: cachedTrainee?.nationalId ?? '',
-  university: cachedTrainee?.university ?? '—',
-  major: traineeItem?.major ?? cachedTrainee?.major ?? '—',
-  academicLevel: cachedTrainee?.academicLevel ?? '—',
-  email: cachedTrainee?.email ?? '—',
-  phone: cachedTrainee?.phone ?? '—',
-  trackName: cachedTrainee?.trackName ?? '—',
-  programName: cachedTrainee?.programName ?? '—',
-  batchName: cachedTrainee?.batchName ?? '—',
-  companyName: traineeItem?.companyName ?? cachedTrainee?.companyName ?? '—',
-  performancePercent: perf,
-  attendancePercent: att,
-  gitHubUrl: this.getSafeGitHubUrl(
-    traineeItem?.gitHubUrl || cachedTrainee?.gitHubUrl,
-    fullName
-  ),
-  linkedInUrl: this.getSafeLinkedInUrl(
-    traineeItem?.linkedInUrl || cachedTrainee?.linkedInUrl,
-    fullName
-  ),
-  resumeUrl: cachedTrainee?.resumeUrl,
-  warnings: clickedWarningList
-};
+    const initialView: SelectedTraineeDetailView = {
+      traineeId,
+      enrollmentId: traineeItem?.enrollmentId ?? cachedTrainee?.enrollmentId,
+      fullName,
+      initials: this.getInitials(fullName),
+      avatarColor: this.getAvatarColor(index),
+      nationalId: cachedTrainee?.nationalId ?? '',
+      university: cachedTrainee?.university ?? '—',
+      major: traineeItem?.major ?? cachedTrainee?.major ?? '—',
+      academicLevel: cachedTrainee?.academicLevel ?? '—',
+      email: cachedTrainee?.email ?? '—',
+      phone: cachedTrainee?.phone ?? '—',
+      trackName: cachedTrainee?.trackName ?? '—',
+      programName: cachedTrainee?.programName ?? '—',
+      batchName: cachedTrainee?.batchName ?? '—',
+      companyName: traineeItem?.companyName ?? cachedTrainee?.companyName ?? '—',
+      performancePercent: perf,
+      attendancePercent: att,
+      gitHubUrl: this.getSafeGitHubUrl(
+        traineeItem?.gitHubUrl || cachedTrainee?.gitHubUrl,
+        fullName
+      ),
+      linkedInUrl: this.getSafeLinkedInUrl(
+        traineeItem?.linkedInUrl || cachedTrainee?.linkedInUrl,
+        fullName
+      ),
+      resumeUrl: cachedTrainee?.resumeUrl,
+      warnings: clickedWarningList
+    };
 
     this.selectedTraineeProfile.set(initialView);
     this.isProfileLoading.set(true);
@@ -706,12 +705,12 @@ const initialView: SelectedTraineeDetailView = {
       const enrollmentId = firstEnr.enrollmentId || initialView.enrollmentId;
 
       // Read trainee skills without creating fallback sample data.
-const skillsArr = profile?.skills
-  ? String(profile.skills)
-      .split(/[,،|]/)
-      .map((s: string) => s.trim())
-      .filter(Boolean)
-  : (initialView.skills ?? []);
+      const skillsArr = profile?.skills
+        ? String(profile.skills)
+          .split(/[,،|]/)
+          .map((s: string) => s.trim())
+          .filter(Boolean)
+        : (initialView.skills ?? []);
 
       const matchedBatch = this.allBatches().find((b: any) => (b.batchId ?? b.id) === firstEnr.batchId);
 
@@ -776,17 +775,17 @@ const skillsArr = profile?.skills
           lateDays: attList.length > 0 ? lateCount : initialView.lateDays,
           excusedDays: attList.length > 0 ? excusedCount : initialView.excusedDays,
           trainerNotes: evalNotes,
-skills: skillsArr,
-gitHubUrl: this.getSafeGitHubUrl(
-  profile?.gitHubUrl || initialView.gitHubUrl,
-  fullName
-),
-linkedInUrl: this.getSafeLinkedInUrl(
-  profile?.linkedInUrl || initialView.linkedInUrl,
-  fullName
-),
-warnings: finalWarnings
-});
+          skills: skillsArr,
+          gitHubUrl: this.getSafeGitHubUrl(
+            profile?.gitHubUrl || initialView.gitHubUrl,
+            fullName
+          ),
+          linkedInUrl: this.getSafeLinkedInUrl(
+            profile?.linkedInUrl || initialView.linkedInUrl,
+            fullName
+          ),
+          warnings: finalWarnings
+        });
 
         this.isProfileLoading.set(false);
       });
@@ -836,8 +835,7 @@ warnings: finalWarnings
     this.initDonutChart();
     // تطبيق بيانات API حتى لو وصلت قبل إنشاء عنصر الرسم.
     this.updateBarChartData(this.charts());
-    this.updateDonutChartData(this.selectedYear());
-  }
+this.updateDonutChartData();  }
 
   ngOnDestroy() {
     if (this.barChartInstance) this.barChartInstance.destroy();
@@ -887,7 +885,7 @@ warnings: finalWarnings
   onYearChange(event: Event) {
     const val = (event.target as HTMLSelectElement).value;
     this.selectedYear.set(val);
-    this.updateDonutChartData(val);
+    this.updateDonutChartData();
   }
 
   getInitials(name?: string): string {
@@ -951,7 +949,7 @@ warnings: finalWarnings
         }
       }
     };
-    
+
 
     this.barChartInstance = new Chart(ctx, {
       type: 'bar',
@@ -1150,16 +1148,16 @@ warnings: finalWarnings
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { 
-            position: 'bottom', 
-            labels: { 
-              boxWidth: 12, 
+          legend: {
+            position: 'bottom',
+            labels: {
+              boxWidth: 12,
               padding: 16,
               font: {
                 family: 'Cairo, Tajawal, sans-serif',
                 size: 12
               }
-            } 
+            }
           },
           tooltip: {
             enabled: false
@@ -1178,33 +1176,26 @@ warnings: finalWarnings
     this.barChartInstance.update();
   }
 
-  private updateDonutChartData(year: string) {
-    if (!this.donutChartInstance) return;
+  // Update tracks donut chart using backend distribution only.
+private updateDonutChartData(): void {
+  if (!this.donutChartInstance) return;
 
-    const yearBatches = this.allBatches().filter(b =>
-      b.startDate && new Date(b.startDate).getFullYear().toString() === year
-    );
+  const tracks = this.charts()?.tracksDistribution ?? [];
 
-    const trackCounts: Record<string, number> = {};
-    yearBatches.forEach(b => {
-      const track = b.trackName || 'غير محدد';
-      trackCounts[track] = (trackCounts[track] || 0) + 1;
-    });
+  const validTracks = tracks.filter(
+    item => item.label && item.value > 0
+  );
 
-    const labels = Object.keys(trackCounts);
-    const dataValues = Object.values(trackCounts);
+  this.donutChartInstance.data.labels = validTracks.map(
+    item => item.label
+  );
 
-    if (labels.length > 0) {
-      this.donutChartInstance.data.labels = labels;
-      this.donutChartInstance.data.datasets[0].data = dataValues;
-    } else {
-      // إبقاء الرسم فارغاً عند عدم وجود بيانات فعلية للسنة المحددة.
-      this.donutChartInstance.data.labels = [];
-      this.donutChartInstance.data.datasets[0].data = [];
-    }
+  this.donutChartInstance.data.datasets[0].data = validTracks.map(
+    item => item.value
+  );
 
-    this.donutChartInstance.update();
-  }
+  this.donutChartInstance.update();
+}
 
   getActivityClass(action?: string, entityName?: string): string {
     const act = (action || '').toLowerCase();
