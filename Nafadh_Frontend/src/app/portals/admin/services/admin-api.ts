@@ -59,9 +59,10 @@ export class AdminApi {
   // ==========================================================
   // 2. Dashboard & Statistics
   // ==========================================================
+  // جلب جميع مؤشرات لوحة الإدارة من Report API دون الاعتماد على مسار بديل.
   getAdminDashboardSummary(): Observable<any> {
-  return this.http.get<any>(`${this.base}/Report/dashboard-summary`);
-}
+    return this.http.get<any>(`${this.base}/Report/dashboard-summary`);
+  }
 
   getDashboardCharts(): Observable<DashboardChartsDto> {
     return this.http.get<DashboardChartsDto>(`${this.base}/Report/dashboard-charts`);
