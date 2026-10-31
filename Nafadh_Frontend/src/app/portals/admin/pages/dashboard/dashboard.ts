@@ -752,11 +752,13 @@ if (traineeItem?.warningId) {
           )
           .map((w: any) => ({
             warningId: w.warningId ?? w.id ?? 0,
-            type: w.type || 'Attendance',
-            level: w.level || 'First',
-            status: w.status || 'Active',
-            date: (w.issuedDate || w.createdAt || new Date().toISOString()).slice(0, 10),
-            reason: w.evidence || w.resolution || 'ملاحظة مسجلة في نظام المتابعة والالتزام.'
+            type: w.type ?? '—',
+level: w.level ?? '—',
+status: w.status ?? '—',
+date: w.issuedDate || w.createdAt
+  ? String(w.issuedDate || w.createdAt).slice(0, 10)
+  : '—',
+reason: w.evidence ?? w.resolution ?? '—'
           }));
 
         const finalWarnings = [...traineeWarnings];
