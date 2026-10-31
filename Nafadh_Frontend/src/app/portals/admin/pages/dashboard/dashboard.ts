@@ -86,8 +86,8 @@ export interface SelectedTraineeDetailView {
   trainerName?: string;
 
   performancePercent?: number;
-  technicalScore?: number;
-  behavioralScore?: number;
+  technicalScore?: number | null;
+  behavioralScore?: number | null;
   moduleProgressPercent?: number;
   attendancePercent?: number;
 
@@ -737,10 +737,34 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
         const lateCount = attList.filter(a => String(a.status).toLowerCase().includes('late') || a.status === 3).length;
         const excusedCount = attList.filter(a => String(a.status).toLowerCase().includes('excus') || a.status === 4).length;
 
+        // فصل التقييمات الفنية والسلوكية حسب نوع نموذج التقييم في Backend.
+        const getAverageScore = (typeName: string): number | null => {
+          const scores = evalList
+            .filter((e: any) => {
+              const evaluationType =
+                e.evaluationTemplate?.type ??
+                e.evaluationTemplateType ??
+                e.templateType ??
+                e.type;
+
+              return String(evaluationType).toLowerCase() === typeName.toLowerCase()
+                && e.score !== null
+                && e.score !== undefined;
+            })
+            .map((e: any) => Number(e.score))
+            .filter((score: number) => Number.isFinite(score));
+
+          return scores.length
+            ? Math.round(scores.reduce((sum: number, score: number) => sum + score, 0) / scores.length * 10) / 10
+            : null;
+        };
+
+        const technicalScore = getAverageScore('Technical');
+        const behavioralScore = getAverageScore('Behavioral');
+
         const latestEval = evalList[0];
         const evalNotes = latestEval?.feedback || latestEval?.notes || latestEval?.comment || initialView.trainerNotes;
         const evalTrainer = latestEval?.trainerName || firstEnr?.trainerName || initialView.trainerName;
-
         const traineeWarnings = this.allWarningsCache()
           .filter((w: any) =>
             w.traineeId === traineeId ||
@@ -788,6 +812,8 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
           lateDays: attList.length > 0 ? lateCount : initialView.lateDays,
           excusedDays: attList.length > 0 ? excusedCount : initialView.excusedDays,
           trainerNotes: evalNotes,
+          technicalScore,
+          behavioralScore,
           skills: skillsArr,
           gitHubUrl: this.getSafeGitHubUrl(
             profile?.gitHubUrl || initialView.gitHubUrl
