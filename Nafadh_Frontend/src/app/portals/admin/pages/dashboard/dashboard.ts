@@ -449,9 +449,8 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
       companies: this.api.getCompanies().pipe(catchError(() => of([]))),
       batches: this.api.getBatches().pipe(catchError(() => of([]))),
       warnings: this.api.getWarnings({ _t: cacheBuster }).pipe(catchError(() => of([]))),
-      adminSummary: (this.api as any).getAdminDashboardSummary
-        ? (this.api as any).getAdminDashboardSummary().pipe(catchError(() => of(null)))
-        : of(null)
+      // ملخص Dashboard مطلوب من Backend؛ لا نستخدم بيانات بديلة عند غياب الدالة أو فشل الطلب.
+      adminSummary: this.api.getAdminDashboardSummary().pipe(catchError(() => of(null)))
     }).subscribe(({ traineesRes, companies, batches, warnings, adminSummary }: any) => {
       const traineesList: any[] = traineesRes?.items || (Array.isArray(traineesRes) ? traineesRes : []);
       const totalTrainees = traineesRes?.totalCount || traineesList.length || 0;
@@ -483,81 +482,20 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
         this.updateDonutChartData(this.selectedYear());
       }
 
+      // مصدر أرقام ومؤشرات لوحة الإدارة هو ملخص Backend فقط؛ لا نستبدل القيم بحسابات محلية.
       const summaryData = adminSummary as AdminDashboardSummary | null;
-      if (summaryData && summaryData.capacity && summaryData.capacity.total > 0) {
-        if (!summaryData.topPerformersAvgScore || summaryData.topPerformersAvgScore <= 0) {
-          summaryData.topPerformersAvgScore = summaryData.overallAttendanceRate > 0 ? summaryData.overallAttendanceRate : 88.4;
-        }
+      if (summaryData) {
         this.summary.set(summaryData);
         this.allTopPerformers.set(summaryData.topPerformers || []);
         this.allAtRiskTrainees.set(summaryData.atRiskTrainees || []);
-        this.loadFullListsFromBatches(batchesList, traineesList, summaryData.topPerformers || [], summaryData.atRiskTrainees || []);
-        this.finishLoading(isManualRefresh);
-        return;
+      } else {
+        // عند فشل الملخص نعرض حالة بلا بيانات بدل إنشاء أرقام تقديرية.
+        this.summary.set(null);
+        this.allTopPerformers.set([]);
+        this.allAtRiskTrainees.set([]);
       }
 
-      this.buildSummaryFromExistingEndpoints(traineesList, totalTrainees, companiesList, batchesList, warningsList, isManualRefresh);
-    });
-  }
-
-  private loadFullListsFromBatches(batchesList: any[], traineesList: any[], fallbackTop: any[], fallbackRisk: any[]) {
-    const sampleBatches = batchesList.slice(0, 6);
-    if (!sampleBatches.length) return;
-
-    const batchReportCalls = sampleBatches.map((b: any) =>
-      this.api.getBatchPerformanceReport(b.batchId ?? b.id, 1, 60).pipe(catchError(() => of(null)))
-    );
-
-    forkJoin(batchReportCalls).subscribe((reports: any[]) => {
-      const allRows: any[] = [];
-      (reports || []).forEach((r: any, idx: number) => {
-        if (r && Array.isArray(r.rows)) {
-          const batchObj: any = sampleBatches[idx] || {};
-          const progTitle = r.programName || batchObj.programName || batchObj.programTitle || batchObj.trackName || batchObj.batchName || '';
-          r.rows.forEach((row: any) => {
-            allRows.push({ ...row, programName: progTitle });
-          });
-        }
-      });
-
-      const traineeLookup = new Map<number, any>();
-      traineesList.forEach((t: any) => traineeLookup.set(t.traineeId ?? t.id, t));
-
-      const enriched = allRows.map((r: any) => {
-        const tInfo = traineeLookup.get(r.traineeId) || {};
-        const rawScore = Number(r.finalScore) > 0
-          ? Number(r.finalScore)
-          : (Number(r.technicalScore) > 0 ? Number(r.technicalScore) : Number(r.attendanceRate ?? 0));
-        const perf = Math.round(rawScore * 10) / 10;
-        const att = Math.round(Number(r.attendanceRate ?? 0) * 10) / 10;
-        return {
-          traineeId: r.traineeId,
-          enrollmentId: r.enrollmentId ?? 0,
-          fullName: r.traineeName || tInfo.fullName || 'متدرب',
-          major: r.programName || tInfo.programName || r.major || tInfo.major || 'تقنية المعلومات',
-          companyName: tInfo.companyName || '',
-          gitHubUrl: tInfo.gitHubUrl,
-          linkedInUrl: tInfo.linkedInUrl,
-          performancePercent: perf,
-          attendancePercent: att
-        };
-      });
-
-      const fullTop = enriched
-        .filter((x: any) => x.performancePercent >= 80)
-        .sort((a: any, b: any) => b.performancePercent - a.performancePercent);
-
-      if (fullTop.length > fallbackTop.length) {
-        this.allTopPerformers.set(fullTop);
-      }
-
-      const fullRisk = enriched
-        .filter((x: any) => x.attendancePercent > 0 && (x.attendancePercent < 80 || x.performancePercent < 60))
-        .sort((a: any, b: any) => a.attendancePercent - b.attendancePercent);
-
-      if (fullRisk.length > fallbackRisk.length) {
-        this.allAtRiskTrainees.set(fullRisk);
-      }
+      this.finishLoading(isManualRefresh);
     });
   }
 
@@ -570,178 +508,7 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  private buildSummaryFromExistingEndpoints(
-    traineesList: any[],
-    totalTrainees: number,
-    companiesList: any[],
-    batchesList: any[],
-    warningsList: any[],
-    isManualRefresh: boolean
-  ) {
-    const rawTotalCap = companiesList.reduce((acc: number, c: any) => acc + (Number(c.capacity ?? c.Capacity ?? 0) || 0), 0);
-    const usedCap = totalTrainees;
-    const totalCap = rawTotalCap >= usedCap ? rawTotalCap : Math.max(rawTotalCap, Math.ceil(usedCap * 1.25));
-    const remainingCap = Math.max(0, totalCap - usedCap);
-
-    const activeCount = traineesList.filter((t: any) => {
-      const s = String(t.status ?? '').toLowerCase();
-      return s === 'active' || s === '1' || s === 'inprogress' || s.includes('نشط');
-    }).length || Math.round(totalTrainees * 0.85);
-
-    const progMap: Record<string, number> = {};
-    batchesList.forEach((b: any) => {
-      const pName = b.programName || b.programTitle || b.trackName || b.name || 'برنامج تدريبي';
-      const count = Number(b.traineesCount ?? b.enrollmentCount ?? Math.max(5, Math.round(totalTrainees / Math.max(1, batchesList.length))));
-      progMap[pName] = (progMap[pName] || 0) + count;
-    });
-    const programDistribution = Object.entries(progMap)
-      .map(([label, value]) => ({ label, value }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 6);
-
-    const mappedWarnings = warningsList
-      .sort((a: any, b: any) => new Date(b.issuedDate ?? b.createdAt ?? 0).getTime() - new Date(a.issuedDate ?? a.createdAt ?? 0).getTime())
-      .slice(0, 6)
-      .map((w: any) => ({
-        warningId: w.warningId ?? w.id ?? 0,
-        scope: w.companyId && !w.enrollmentId ? 'Company' : 'Trainee',
-        traineeId: w.traineeId,
-        companyId: w.companyId,
-        targetName: w.traineeName || w.companyName || w.targetName || (w.companyId ? `شركة #${w.companyId}` : `متدرب #${w.enrollmentId || w.warningId}`),
-        gitHubUrl: w.gitHubUrl,
-        linkedInUrl: w.linkedInUrl,
-        type: w.type || 'Performance',
-        level: w.level || 'First',
-        status: w.status || 'Active',
-        issuedDate: w.issuedDate || w.createdAt || new Date().toISOString()
-      }));
-
-    const sampleBatches = batchesList.slice(0, 5);
-    const batchReportCalls = sampleBatches.map((b: any) =>
-      this.api.getBatchPerformanceReport(b.batchId ?? b.id, 1, 50).pipe(catchError(() => of(null)))
-    );
-
-    const certCalls = sampleBatches.slice(0, 3).map((b: any) =>
-      this.api.getBatchCertificatesStatus(b.batchId ?? b.id).pipe(catchError(() => of([])))
-    );
-
-    forkJoin({
-      reports: batchReportCalls.length ? forkJoin(batchReportCalls) : of([]),
-      certs: certCalls.length ? forkJoin(certCalls) : of([])
-    }).subscribe(({ reports, certs }: any) => {
-      const validReports = (reports || []).filter((r: any): r is any => r !== null);
-      const allRows: any[] = [];
-      (reports || []).forEach((r: any, idx: number) => {
-        if (r && Array.isArray(r.rows)) {
-          const batchObj: any = sampleBatches[idx] || {};
-          const progTitle = r.programName || batchObj.programName || batchObj.programTitle || batchObj.trackName || batchObj.batchName || '';
-          r.rows.forEach((row: any) => {
-            allRows.push({ ...row, programName: progTitle });
-          });
-        }
-      });
-
-      const traineeLookup = new Map<number, any>();
-      traineesList.forEach((t: any) => traineeLookup.set(t.traineeId ?? t.id, t));
-
-      let overallAttendance = 0;
-      if (allRows.length > 0) {
-        overallAttendance = Math.round(
-          (allRows.reduce((s: number, r: any) => s + Number(r.attendanceRate ?? 0), 0) / allRows.length) * 10
-        ) / 10;
-      } else if (validReports.length > 0) {
-        overallAttendance = Math.round(
-          (validReports.reduce((s: number, r: any) => s + Number(r.avgAttendance ?? 0), 0) / validReports.length) * 10
-        ) / 10;
-      } else {
-        overallAttendance = 81.2;
-      }
-
-      const enrichedRows = allRows.map((r: any) => {
-        const tInfo = traineeLookup.get(r.traineeId) || {};
-        const rawScore = Number(r.finalScore) > 0
-          ? Number(r.finalScore)
-          : (Number(r.technicalScore) > 0 ? Number(r.technicalScore) : Number(r.attendanceRate ?? 0));
-        const perf = Math.round(rawScore * 10) / 10;
-        const att = Math.round(Number(r.attendanceRate ?? 0) * 10) / 10;
-        return {
-          traineeId: r.traineeId,
-          enrollmentId: r.enrollmentId ?? 0,
-          fullName: r.traineeName || tInfo.fullName || 'متدرب',
-          major: r.programName || tInfo.programName || r.major || tInfo.major || 'تقنية المعلومات',
-          companyName: tInfo.companyName || '',
-          gitHubUrl: tInfo.gitHubUrl,
-          linkedInUrl: tInfo.linkedInUrl,
-          performancePercent: perf,
-          attendancePercent: att
-        };
-      });
-
-      const topList = enrichedRows
-        .filter((x: any) => x.performancePercent >= 80)
-        .sort((a: any, b: any) => b.performancePercent - a.performancePercent);
-
-      const riskList = enrichedRows
-        .filter((x: any) => x.attendancePercent > 0 && (x.attendancePercent < 80 || x.performancePercent < 60))
-        .sort((a: any, b: any) => a.attendancePercent - b.attendancePercent);
-
-      const allTopForMonth = topList.length > 0
-        ? topList
-        : enrichedRows.sort((a: any, b: any) => b.performancePercent - a.performancePercent).slice(0, 10);
-
-      this.allTopPerformers.set(allTopForMonth);
-      this.allAtRiskTrainees.set(riskList);
-
-      const topPerformers = allTopForMonth.slice(0, 5);
-      const atRiskTrainees = riskList.slice(0, 5);
-
-      const calculatedTopAvg = topPerformers.length > 0
-        ? Math.round((topPerformers.reduce((s: number, x: any) => s + x.performancePercent, 0) / topPerformers.length) * 10) / 10
-        : 0;
-      const topAvg = calculatedTopAvg > 0 ? calculatedTopAvg : (overallAttendance > 0 ? Math.min(98, Math.round((overallAttendance + 6.5) * 10) / 10) : 88.4);
-
-      const flatCerts = (certs || []).flat();
-      const issuedCerts = flatCerts.filter((c: any) => c?.isIssued || c?.certificateId).length;
-      const estimatedTotalCerts = issuedCerts > 0
-        ? Math.round(issuedCerts * (batchesList.length / Math.max(1, sampleBatches.slice(0, 3).length)))
-        : Math.round(totalTrainees * 0.35);
-
-      const baseAtt = overallAttendance || 80;
-      const attendanceWeeks = [
-        { label: 'أسبوع 28', value: Math.min(100, Math.max(50, Math.round((baseAtt - 3.2) * 10) / 10)) },
-        { label: 'أسبوع 29', value: Math.min(100, Math.max(50, Math.round((baseAtt + 0.8) * 10) / 10)) },
-        { label: 'أسبوع 30', value: Math.min(100, Math.max(50, Math.round((baseAtt + 3.5) * 10) / 10)) },
-        { label: 'أسبوع 31', value: Math.min(100, Math.max(50, Math.round((baseAtt + 1.1) * 10) / 10)) },
-        { label: 'أسبوع 32', value: Math.min(100, Math.max(50, Math.round((baseAtt + 1.8) * 10) / 10)) },
-        { label: 'أسبوع 33', value: Math.min(100, Math.max(50, Math.round((baseAtt - 1.4) * 10) / 10)) }
-      ];
-
-      this.summary.set({
-        totalTrainees,
-        activeTrainees: activeCount,
-        totalCompanies: companiesList.length,
-        totalBatches: batchesList.length,
-        totalCertificates: estimatedTotalCerts,
-        overallAttendanceRate: overallAttendance,
-        topPerformersCount: allTopForMonth.length,
-        topPerformersAvgScore: topAvg,
-        atRiskCount: riskList.length || atRiskTrainees.length,
-        capacity: {
-          total: totalCap,
-          used: usedCap,
-          remaining: remainingCap
-        },
-        attendanceWeeks,
-        companyDistribution: [],
-        programDistribution,
-        topPerformers,
-        atRiskTrainees,
-        recentWarnings: mappedWarnings
-      });
-
-      this.finishLoading(isManualRefresh);
-    });
-  }
+  // لا تُنشأ مؤشرات Dashboard محلياً؛ مصدرها الوحيد هو Report/dashboard-summary.
 
   onWarningItemPreview(w: any, index: number = 0) {
     const target = String(w?.targetName || '');
@@ -1044,6 +811,9 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
   ngAfterViewInit() {
     this.initBarChart();
     this.initDonutChart();
+    // تطبيق بيانات API حتى لو وصلت قبل إنشاء عنصر الرسم.
+    this.updateBarChartData(this.charts());
+    this.updateDonutChartData(this.selectedYear());
   }
 
   ngOnDestroy() {
@@ -1163,9 +933,10 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
     this.barChartInstance = new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: ['2021', '2022', '2023', '2024', '2025'],
+        // لا توجد قيم افتراضية؛ تُملأ البيانات من DashboardCharts API.
+        labels: [],
         datasets: [{
-          data: [4, 7, 9, 11, 6],
+          data: [],
           backgroundColor: '#0A1172',
           hoverBackgroundColor: '#0A1172',
           borderRadius: 6,
@@ -1404,8 +1175,9 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
       this.donutChartInstance.data.labels = labels;
       this.donutChartInstance.data.datasets[0].data = dataValues;
     } else {
-      this.donutChartInstance.data.labels = ['لا توجد بيانات'];
-      this.donutChartInstance.data.datasets[0].data = [0];
+      // إبقاء الرسم فارغاً عند عدم وجود بيانات فعلية للسنة المحددة.
+      this.donutChartInstance.data.labels = [];
+      this.donutChartInstance.data.datasets[0].data = [];
     }
 
     this.donutChartInstance.update();
