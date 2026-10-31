@@ -10,10 +10,11 @@ namespace Nafadh_Backend.Controllers
     public class BatchController : ControllerBase
     {
         private readonly IBatchService _service;
-
-        public BatchController(IBatchService service)
+        private readonly IRiskWarningService _riskWarningService;
+        public BatchController(IBatchService service, IRiskWarningService riskWarningService)
         {
             _service = service;
+            _riskWarningService = riskWarningService;   
         }
 
         [HttpGet]
@@ -101,6 +102,18 @@ namespace Nafadh_Backend.Controllers
             return Ok(result);
         }
 
+        [Authorize(Roles = "Admin")]
+        [HttpPost("process-risk-warnings")]
+        public async Task<IActionResult> ProcessRiskWarnings()
+        {
+            var processedCount =
+                await _riskWarningService.ProcessAllActiveEnrollmentsRiskAsync();
 
+            return Ok(new
+            {
+                message = "تم فحص التسجيلات النشطة ومعالجة التحذيرات التلقائية.",
+                processedCount
+            });
+        }
     }
 }
