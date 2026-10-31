@@ -444,12 +444,17 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
       this.updateDisplayedActivity();
     });
 
-    this.api.getDashboardCharts().pipe(catchError(() => of(null))).subscribe((c: any) => {
-      if (c) {
-        this.charts.set(c);
-        this.updateBarChartData(c);
-      }
-    });
+    // Load dashboard charts from backend and update both chart types.
+this.api.getDashboardCharts().pipe(
+  catchError(() => of(null))
+).subscribe((c: any) => {
+  this.charts.set(c);
+
+  if (c) {
+    this.updateBarChartData(c);
+    this.updateDonutChartData();
+  }
+});
 
     forkJoin({
       traineesRes: this.api.getTrainees({ page: 1, pageSize: 2000, _t: cacheBuster }).pipe(catchError(() => of({ items: [], totalCount: 0 }))),
@@ -486,7 +491,8 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
         if (!years.includes(this.selectedYear())) {
           this.selectedYear.set(years[0]);
         }
-this.updateDonutChartData();      }
+        this.updateDonutChartData();
+      }
 
       // مصدر أرقام ومؤشرات لوحة الإدارة هو ملخص Backend فقط؛ لا نستبدل القيم بحسابات محلية.
       const summaryData = adminSummary as AdminDashboardSummary | null;
@@ -835,7 +841,8 @@ this.updateDonutChartData();      }
     this.initDonutChart();
     // تطبيق بيانات API حتى لو وصلت قبل إنشاء عنصر الرسم.
     this.updateBarChartData(this.charts());
-this.updateDonutChartData();  }
+    this.updateDonutChartData();
+  }
 
   ngOnDestroy() {
     if (this.barChartInstance) this.barChartInstance.destroy();
@@ -1177,25 +1184,25 @@ this.updateDonutChartData();  }
   }
 
   // Update tracks donut chart using backend distribution only.
-private updateDonutChartData(): void {
-  if (!this.donutChartInstance) return;
+  private updateDonutChartData(): void {
+    if (!this.donutChartInstance) return;
 
-  const tracks = this.charts()?.tracksDistribution ?? [];
+    const tracks = this.charts()?.tracksDistribution ?? [];
 
-  const validTracks = tracks.filter(
-    item => item.label && item.value > 0
-  );
+    const validTracks = tracks.filter(
+      item => item.label && item.value > 0
+    );
 
-  this.donutChartInstance.data.labels = validTracks.map(
-    item => item.label
-  );
+    this.donutChartInstance.data.labels = validTracks.map(
+      item => item.label
+    );
 
-  this.donutChartInstance.data.datasets[0].data = validTracks.map(
-    item => item.value
-  );
+    this.donutChartInstance.data.datasets[0].data = validTracks.map(
+      item => item.value
+    );
 
-  this.donutChartInstance.update();
-}
+    this.donutChartInstance.update();
+  }
 
   getActivityClass(action?: string, entityName?: string): string {
     const act = (action || '').toLowerCase();
