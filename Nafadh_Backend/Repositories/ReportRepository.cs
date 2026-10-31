@@ -284,6 +284,7 @@ namespace Nafadh_Backend.Repositories
                 .OrderByDescending(w => w.IssuedDate)
                 .ThenByDescending(w => w.WarningId)
                 .Take(6)
+
                 .ToListAsync();
 
 
