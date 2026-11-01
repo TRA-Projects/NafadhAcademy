@@ -1029,3 +1029,73 @@ button:focus-visible,
   background: #fff;
   margin: auto;
 }
+.mailbox-tabs { margin: 12px; }
+.mailbox-draft { border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; }
+.mailbox-draft > .contact-text-button { margin-inline: 16px; color: #b42318; }
+.contact-delete { border: 1px solid #fecaca; border-radius: 8px; padding: 7px 10px; background: #fff; color: #b42318; cursor: pointer; }
+.contact-delete:disabled { opacity: .5; cursor: default; }
+
+/* Slightly wider conversation list while preserving the mobile layout. */
+@media (min-width: 1100px) {
+  .contact-workspace { grid-template-columns: minmax(410px, 460px) minmax(0, 1fr); }
+}
+@media (min-width: 901px) and (max-width: 1099px) {
+  .contact-workspace { grid-template-columns: minmax(350px, 40%) minmax(0, 1fr); }
+}
+
+.contact-delete-wrap { position: relative; flex-shrink: 0; }
+.contact-delete-popover {
+  position: absolute;
+  inset-block-start: calc(100% + 10px);
+  inset-inline-end: 0;
+  z-index: 20;
+  width: min(290px, 75vw);
+  box-sizing: border-box;
+  padding: 16px;
+  border: 1px solid #e2e5ec;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 10px 30px #18234b24;
+  color: #172343;
+  text-align: right;
+  strong { font-size: 14px; }
+  p { margin: 8px 0 14px; font-size: 12px; line-height: 1.8; color: #64748b; }
+}
+.contact-confirm-actions { display: flex; gap: 14px; align-items: center; }
+
+.contact-delete-icon { width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+/* Compact conversation actions; scoped to this page. */
+.contact-page .chat-composer button,
+.contact-page .contact-delete-wrap > button,
+.contact-page .contact-confirm-actions button {
+  font-size: 13px;
+  line-height: 1.5;
+  min-height: 34px;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+.contact-page .chat-composer .nfd-btn {
+  gap: 5px;
+  min-height: 36px;
+  padding: 7px 12px;
+}
+
+.contact-page .contact-delete-wrap > .contact-delete-icon {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+}
+
+/* Empty lists need no scroll container. */
+.contact-page .contact-list.contact-list-empty {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.contact-page .contact-list-empty > .contact-placeholder {
+  min-height: 0;
+  padding: 20px 12px;
+  box-sizing: border-box;
+}
