@@ -2170,6 +2170,21 @@ namespace Nafadh_Backend.Services
            int batchId, int pageNumber, int pageSize)
           => _repository.GetBatchPerformanceAsync(batchId, pageNumber, pageSize);
 
+        // Admin Reports - Company Batch Performance
+        public Task<AdminCompanyBatchPerformanceDTO?> GetAdminCompanyBatchPerformanceAsync(
+            int companyId,
+            int batchId,
+            int pageNumber,
+            int pageSize)
+        {
+            return _repository.GetAdminCompanyBatchPerformanceAsync(
+                companyId,
+                batchId,
+                pageNumber,
+                pageSize
+            );
+        }
+
         public Task<AttendanceReportDTO?>
             GetCompanyAttendanceReportAsync(
                 int companyId
@@ -2243,6 +2258,12 @@ namespace Nafadh_Backend.Services
                 .GetTrainerKpisAsync(
                     trainerId
                 );
+        }
+
+        // Admin Reports - Companies Summary
+        public Task<AdminCompaniesSummaryDTO> GetAdminCompaniesSummaryAsync()
+        {
+            return _repository.GetAdminCompaniesSummaryAsync();
         }
     }
 }
