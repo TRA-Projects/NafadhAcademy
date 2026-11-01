@@ -26,6 +26,8 @@ namespace Nafadh_Backend
         {
             var builder = WebApplication.CreateBuilder(args);
             QuestPDF.Settings.License = LicenseType.Community;
+            QuestPDF.Settings.UseSystemFonts = true;
+
 
             // Add services to the container.
             builder.Services.AddControllers(options =>
