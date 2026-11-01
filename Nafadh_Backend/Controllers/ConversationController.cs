@@ -96,6 +96,8 @@ namespace Nafadh_Backend.Controllers
                 // Company tickets are addressed to the authority, never a client-selected user.
                 if (!IsAdmin) dto.ReceiverUserId = null;
             }
+            if (dto.Type != NFD_ConversationType.CompanyThread && dto.FirstMessage.Length > 1000)
+                return BadRequest(new { message = "الحد الأقصى للرسالة 1000 حرف." });
             dto.Subject = dto.Subject.Trim();
             dto.FirstMessage = dto.FirstMessage.Trim();
             dto.Category = dto.Category?.Trim();
