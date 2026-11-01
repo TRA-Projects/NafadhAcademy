@@ -197,20 +197,20 @@ export class CompanySupervisors implements OnInit {
           : (response?.items ?? response?.data ?? []);
 
         const fakeStats: SupervisorStats[] = [
-          { monthlyEvaluations: 4, attendanceRate: 94, assignedTrainees: 6 },
-          { monthlyEvaluations: 3, attendanceRate: 88, assignedTrainees: 5 },
-          { monthlyEvaluations: 6, attendanceRate: 96, assignedTrainees: 8 },
-          { monthlyEvaluations: 2, attendanceRate: 72, assignedTrainees: 4 },
-          { monthlyEvaluations: 5, attendanceRate: 91, assignedTrainees: 7 },
-          { monthlyEvaluations: 3, attendanceRate: 79, assignedTrainees: 5 },
-          { monthlyEvaluations: 7, attendanceRate: 97, assignedTrainees: 9 },
-          { monthlyEvaluations: 4, attendanceRate: 85, assignedTrainees: 6 }
+          { monthlyEvaluations: 4, attendanceRate: 94, assignedTrainees: 0 },
+          { monthlyEvaluations: 3, attendanceRate: 88, assignedTrainees: 0 },
+          { monthlyEvaluations: 6, attendanceRate: 96, assignedTrainees: 0 },
+          { monthlyEvaluations: 2, attendanceRate: 72, assignedTrainees: 0 },
+          { monthlyEvaluations: 5, attendanceRate: 91, assignedTrainees: 0 },
+          { monthlyEvaluations: 3, attendanceRate: 79, assignedTrainees: 0 },
+          { monthlyEvaluations: 7, attendanceRate: 97, assignedTrainees: 0 }
         ];
 
         this.supervisors = data.map((item, index) => {
           const id = Number(item.supervisorId ?? item.id ?? index + 1);
           const status = item.status ?? 'Active';
-          const stats = item.stats ?? fakeStats[index % fakeStats.length];
+          const stats = item.stats ?? fakeStats[index % fakeStats.length];0 },
+          { monthlyEvaluations: 4, attendanceRate: 85, assignedTrainees: 
 
           return {
             supervisorId: id,
