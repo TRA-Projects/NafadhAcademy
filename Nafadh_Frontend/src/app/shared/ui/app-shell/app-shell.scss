@@ -451,3 +451,10 @@ nav { flex: 1; padding: 0 12px; display: flex; flex-direction: column; gap: 4px;
     height: 34px;
   }
 }
+/* Subtle outline around the notification empty state. */
+.notif-panel .notif-empty {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  margin: 10px;
+  box-sizing: border-box;
+}
