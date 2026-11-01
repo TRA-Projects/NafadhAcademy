@@ -6,6 +6,8 @@ import {
   signal,
 } from '@angular/core';
 
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../../environments/environment';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
@@ -34,6 +36,8 @@ import {
 })
 export class CompanyDashboard implements OnInit {
   private readonly api = inject(CompanyApi);
+  private readonly http = inject(HttpClient);
+  readonly announcementsError = signal(false);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
@@ -249,6 +253,7 @@ export class CompanyDashboard implements OnInit {
   // ============================================================
 
   refreshData(): void {
+    if (this.loading()) return;
     const companyId = this.companyId();
 
     /**
@@ -275,6 +280,9 @@ export class CompanyDashboard implements OnInit {
 
     this.loading.set(true);
     this.loadError.set(false);
+    this.announcementsError.set(false);
+    this.announcementsDismissed.set(false);
+    this.selectedOpportunity.set(null);
     this.barsAnimating.set(false);
 
     /**
@@ -293,9 +301,12 @@ export class CompanyDashboard implements OnInit {
       // Announcements are secondary content: if they fail, the dashboard
       // must still render its company statistics.
       announcements:
-        this.api.getPlatformAnnouncements().pipe(
+        this.http.get<AnnouncementDto[]>(
+          `${environment.apiBaseUrl}/CompanyDashboard/${companyId}/announcements`
+        ).pipe(
           catchError((error) => {
-            console.warn('Platform announcements failed to load:', error);
+            console.warn('Company announcements failed to load:', error);
+            this.announcementsError.set(true);
             return of([] as AnnouncementDto[]);
           })
         ),
