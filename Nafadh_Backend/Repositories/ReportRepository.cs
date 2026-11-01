@@ -184,23 +184,23 @@ namespace Nafadh_Backend.Repositories
                 .ToList();
 
             var atRiskTrainees = traineeStats
-    .Where(x =>
-        x.Attendance < 80 ||
-        x.Performance < 60)
-    .OrderBy(x => x.Attendance)
-    .Select(x => new AdminDashboardTraineeDTO
-    {
-        TraineeId = x.Enrollment.TraineeId,
-        EnrollmentId = x.Enrollment.EnrollmentId,
-        FullName = x.Enrollment.Trainee.User?.FullName,
-        Major = x.Enrollment.Trainee.Major,
-        CompanyName = x.Enrollment.Company?.CompanyName,
-        GitHubUrl = x.Enrollment.Trainee.GitHubUrl,
-        LinkedInUrl = x.Enrollment.Trainee.LinkedInUrl,
-        PerformancePercent = x.Performance,
-        AttendancePercent = x.Attendance
-    })
-    .ToList();
+      .Where(x =>
+          x.Attendance < 80 ||
+          x.Performance < 60)
+      .OrderBy(x => x.Attendance)
+      .Select(x => new AdminDashboardTraineeDTO
+      {
+          TraineeId = x.Enrollment.TraineeId,
+          EnrollmentId = x.Enrollment.EnrollmentId,
+          FullName = x.Enrollment.Trainee.User?.FullName,
+          Major = x.Enrollment.Trainee.Major,
+          CompanyName = x.Enrollment.Company?.CompanyName,
+          GitHubUrl = x.Enrollment.Trainee.GitHubUrl,
+          LinkedInUrl = x.Enrollment.Trainee.LinkedInUrl,
+          PerformancePercent = x.Performance,
+          AttendancePercent = x.Attendance
+      })
+      .ToList();
 
             var attendanceWeeks = allAttendance
                 .GroupBy(a => (
