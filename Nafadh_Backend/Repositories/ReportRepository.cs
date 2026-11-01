@@ -127,49 +127,15 @@ namespace Nafadh_Backend.Repositories
 
 
 
-            static decimal AverageScore(
-                NFD_Enrollment enrollment,
-                NFD_EvaluationType type)
+            static double GetPerformance(NFD_Enrollment enrollment)
             {
                 var scores = enrollment.Evaluations
-                    .Where(e =>
-                        e.EvaluationTemplate != null &&
-                        e.EvaluationTemplate.Type == type)
                     .Select(e => e.Score)
                     .ToList();
 
                 return scores.Count > 0
-                    ? scores.Average()
-                    : 0m;
-            }
-
-            static double GetPerformance(NFD_Enrollment enrollment)
-            {
-                var scores = new[]
-                {
-        AverageScore(enrollment, NFD_EvaluationType.Technical),
-        AverageScore(enrollment, NFD_EvaluationType.Behavioral),
-        AverageScore(enrollment, NFD_EvaluationType.Final)
-    }
-                .Where(score => score > 0)
-                .ToList();
-
-                return scores.Count > 0
                     ? Math.Round((double)scores.Average(), 1)
-                    : 0.0;
-            }
-
-            static int GetPerformanceEvaluationCount(
-                NFD_Enrollment enrollment)
-            {
-                return enrollment.Evaluations.Count(e =>
-                    e.Score > 0 &&
-                    e.EvaluationTemplate != null &&
-                    (
-                        e.EvaluationTemplate.Type == NFD_EvaluationType.Technical ||
-                        e.EvaluationTemplate.Type == NFD_EvaluationType.Behavioral ||
-                        e.EvaluationTemplate.Type == NFD_EvaluationType.Final
-                    ));
+                    : 100.0;
             }
 
             static double GetAttendance(NFD_Enrollment enrollment)
@@ -181,16 +147,17 @@ namespace Nafadh_Backend.Repositories
                         records.Count(a =>
                             a.Status == NFD_AttendanceStatus.Present)
                         * 100.0 / records.Count, 1)
-                    : 0.0;
+                    : 100.0;
             }
+
+
+
 
             var traineeStats = activeEnrollments
                 .Select(e => new
                 {
                     Enrollment = e,
                     Performance = GetPerformance(e),
-                    PerformanceEvaluationCount =
-                        GetPerformanceEvaluationCount(e),
                     Attendance = GetAttendance(e)
                 })
                 .ToList();
@@ -217,24 +184,23 @@ namespace Nafadh_Backend.Repositories
                 .ToList();
 
             var atRiskTrainees = traineeStats
-                .Where(x =>
-                      (x.Enrollment.DailyAttendances.Count > 0 && x.Attendance < 80) ||
-                      (x.PerformanceEvaluationCount >= 2 && x.Performance < 60))
-                .OrderBy(x => x.Attendance)
-                .ThenBy(x => x.Performance)
-                .Select(x => new AdminDashboardTraineeDTO
-                {
-                    TraineeId = x.Enrollment.TraineeId,
-                    EnrollmentId = x.Enrollment.EnrollmentId,
-                    FullName = x.Enrollment.Trainee.User?.FullName,
-                    Major = x.Enrollment.Trainee.Major,
-                    CompanyName = x.Enrollment.Company?.CompanyName,
-                    GitHubUrl = x.Enrollment.Trainee.GitHubUrl,
-                    LinkedInUrl = x.Enrollment.Trainee.LinkedInUrl,
-                    PerformancePercent = x.Performance,
-                    AttendancePercent = x.Attendance
-                })
-                .ToList();
+    .Where(x =>
+        x.Attendance < 80 ||
+        x.Performance < 60)
+    .OrderBy(x => x.Attendance)
+    .Select(x => new AdminDashboardTraineeDTO
+    {
+        TraineeId = x.Enrollment.TraineeId,
+        EnrollmentId = x.Enrollment.EnrollmentId,
+        FullName = x.Enrollment.Trainee.User?.FullName,
+        Major = x.Enrollment.Trainee.Major,
+        CompanyName = x.Enrollment.Company?.CompanyName,
+        GitHubUrl = x.Enrollment.Trainee.GitHubUrl,
+        LinkedInUrl = x.Enrollment.Trainee.LinkedInUrl,
+        PerformancePercent = x.Performance,
+        AttendancePercent = x.Attendance
+    })
+    .ToList();
 
             var attendanceWeeks = allAttendance
                 .GroupBy(a => (
