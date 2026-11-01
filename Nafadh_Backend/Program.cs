@@ -193,6 +193,7 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<IEvaluationService, EvaluationService>();
             builder.Services.AddScoped<IWarningRepository, WarningRepository>();
             builder.Services.AddScoped<IWarningService, WarningService>();
+            builder.Services.AddScoped<IRiskWarningService, RiskWarningService>();
             builder.Services.AddScoped<ISupportTicketRepository, SupportTicketRepository>();
             builder.Services.AddScoped<ISupportTicketService, SupportTicketService>();
             builder.Services.AddScoped<INotificationRepository, NotificationRepository>();

@@ -19,15 +19,17 @@ namespace Nafadh_Backend.Services
         // NEW: needed so newly-graded evaluations can trigger badge evaluation
         // (e.g. "HighScoreCount" badges) without the controller knowing about badges.
         private readonly IBadgeEvaluationService _badgeEvaluationService;
-
+        private readonly IRiskWarningService _riskWarningService;
         public EvaluationService(
             IEvaluationRepository repository,
             IEvaluationTemplateRepository templateRepository,
-            IBadgeEvaluationService badgeEvaluationService)
+            IBadgeEvaluationService badgeEvaluationService,
+            IRiskWarningService riskWarningService)
         {
             _repository = repository;
             _templateRepository = templateRepository;
             _badgeEvaluationService = badgeEvaluationService;
+            _riskWarningService = riskWarningService;
         }
 
         public async Task<IEnumerable<EvaluationDTO>> GetEvaluationsByEnrollmentIdAsync(int enrollmentId)
@@ -75,14 +77,18 @@ namespace Nafadh_Backend.Services
 
             var created = await _repository.CreateEvaluationAsync(evaluation);
 
-            // Fire-and-check badge conditions that depend on evaluation scores
-            // (e.g. "score >90% on N assignments"). Never blocks the response.
             if (created.EnrollmentId.HasValue)
             {
-                await _badgeEvaluationService.EvaluateEnrollmentEvaluationAsync(created.EnrollmentId.Value);
+                await _badgeEvaluationService
+                    .EvaluateEnrollmentEvaluationAsync(created.EnrollmentId.Value);
+
+                await _riskWarningService
+                    .ProcessEnrollmentRiskAsync(created.EnrollmentId.Value);
             }
 
-            return MapToDTO(await _repository.GetEvaluationByIdAsync(created.EvaluationId) ?? created);
+            return MapToDTO(
+                await _repository.GetEvaluationByIdAsync(created.EvaluationId)
+                ?? created);
         }
 
         public async Task UpdateEvaluationAsync(int id, UpdateEvaluationDTO updateDto)
@@ -112,6 +118,14 @@ namespace Nafadh_Backend.Services
                 }).ToList()
             };
             await _repository.UpdateEvaluationAsync(updated);
+            if (existing.EnrollmentId.HasValue)
+            {
+                await _badgeEvaluationService
+                    .EvaluateEnrollmentEvaluationAsync(existing.EnrollmentId.Value);
+
+                await _riskWarningService
+                    .ProcessEnrollmentRiskAsync(existing.EnrollmentId.Value);
+            }
         }
 
         public async Task<double> GetAverageScoreByEnrollmentIdAsync(int enrollmentId)
