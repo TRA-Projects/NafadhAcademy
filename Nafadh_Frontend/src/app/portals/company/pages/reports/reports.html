@@ -1,5 +1,9 @@
 <div class="reports-page" dir="rtl">
 
+  @if (errorMessage) {
+  <div class="chip bad" style="display:block;margin-bottom:16px;padding:10px 14px;">{{ errorMessage }}</div>
+  }
+
   <!-- Header -->
   <div class="page-head"
     style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
@@ -490,6 +494,7 @@
   <!-- 5. المهام -->
   <!-- ================================================= -->
   
+
 @if (activeTab === 'tasks') {
   <section class="tasks-dashboard" dir="rtl">
 
@@ -544,37 +549,34 @@
         <table class="tasks-table">
           <thead>
             <tr>
-              <th>المتدرب</th>
               <th>المهمة</th>
+              <th>البرنامج</th>
               <th>موعد التسليم</th>
+              <th>الأولوية</th>
               <th>الحالة</th>
+              <th>عدد التسليمات</th>
             </tr>
           </thead>
 
           <tbody>
-            @for (task of tasks; track task.trainee) {
+            @for (item of tasks; track item.id) {
               <tr>
+                <td>{{ item.task }}</td>
+                <td>{{ item.program }}</td>
                 <td>
-                  <div class="task-trainee">
-                    <span class="task-avatar">
-                      {{ task.trainee ? task.trainee.charAt(0) : 'م' }}
-                    </span>
-                    <span>{{ task.trainee }}</span>
-                  </div>
+                  {{ item.due !== 'غير محدد' ? (item.due | date:'yyyy/MM/dd') : 'غير محدد' }}
                 </td>
-                <td>{{ task.task }}</td>
-                <td>{{ task.due }}</td>
+                <td>{{ item.priority }}</td>
                 <td>
-                  <span
-                    class="task-status"
-                    [ngClass]="getTaskStatusClass(task.status)">
-                    {{ getTaskStatusText(task.status) }}
+                  <span [ngClass]="getTaskStatusClass(item.status)">
+                    {{ getTaskStatusText(item.status) }}
                   </span>
                 </td>
+                <td>{{ item.submissionsCount }}</td>
               </tr>
             } @empty {
               <tr>
-                <td colspan="4" class="tasks-empty">
+                <td colspan="6" class="tasks-empty">
                   لا توجد مهام لعرضها حاليًا
                 </td>
               </tr>

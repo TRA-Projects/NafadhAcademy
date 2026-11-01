@@ -518,6 +518,20 @@ export class CompanyApi {
     );
   }
 
+  // جلب مهام الشركة
+getTasksByCompany(companyId: number) {
+  return this.http.get<any[]>(
+    `${this.base}/Task/company/${companyId}`
+  );
+}
+
+// جلب تسليمات مهمة محددة
+getSubmissionsByTask(taskId: number) {
+  return this.http.get<any[]>(
+    `${this.base}/Submission/task/${taskId}`
+  );
+}
+
   // ============================================================
   // Announcements
   // ============================================================
