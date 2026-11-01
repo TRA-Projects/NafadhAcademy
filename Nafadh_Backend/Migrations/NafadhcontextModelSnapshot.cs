@@ -524,6 +524,9 @@ namespace Nafadh_Backend.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PlanId"));
 
+                    b.Property<int?>("BatchId")
+                        .HasColumnType("int");
+
                     b.Property<int>("ApprovalStatus")
                         .HasColumnType("int");
 
@@ -585,6 +588,10 @@ namespace Nafadh_Backend.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("PlanId");
+
+                    b.HasIndex("BatchId")
+                        .IsUnique()
+                        .HasFilter("[BatchId] IS NOT NULL");
 
                     b.HasIndex("CreatedByUserId");
 
@@ -3247,6 +3254,11 @@ namespace Nafadh_Backend.Migrations
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_CoursePlan", b =>
                 {
+                    b.HasOne("Nafadh_Backend.Models.NFD_Batch", "Batch")
+                        .WithMany()
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Nafadh_Backend.Models.NFD_Company", "Company")
                         .WithMany()
                         .HasForeignKey("CompanyId")
@@ -3268,6 +3280,8 @@ namespace Nafadh_Backend.Migrations
                         .WithMany()
                         .HasForeignKey("ReviewedByUserId")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Batch");
 
                     b.Navigation("Company");
 
