@@ -225,6 +225,11 @@ getAdminCompaniesSummary(): Observable<any> {
     return this.http.get(`${this.base}/Trainer`, { params });
   }
 
+   // جلب مؤشرات أداء مدرب محدد
+  getTrainerKpis(trainerId: number): Observable<any> {
+  return this.http.get(`${this.base}/Report/trainer-kpis/${trainerId}`);
+ }
+
   // دفعات مدرب معيّن (تُستخدم لمعرفة المدرب الراصد لكل دفعة)
   getTrainerBatches(trainerId: number): Observable<any[]> {
     const cleanId = this.sanitizeId(trainerId);
