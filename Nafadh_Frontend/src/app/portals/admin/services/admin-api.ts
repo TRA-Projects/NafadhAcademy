@@ -229,6 +229,12 @@ getAdminCompaniesSummary(): Observable<any> {
   getTrainerKpis(trainerId: number): Observable<any> {
   return this.http.get(`${this.base}/Report/trainer-kpis/${trainerId}`);
  }
+ // تقييمات المتدربين للمدرب - بيانات حقيقية
+getTrainerFeedback(trainerId: number): Observable<any> {
+  return this.http.get<any>(
+    `${this.base}/Feedback/trainer/${this.sanitizeId(trainerId)}`
+  );
+}
 
   // دفعات مدرب معيّن (تُستخدم لمعرفة المدرب الراصد لكل دفعة)
   getTrainerBatches(trainerId: number): Observable<any[]> {

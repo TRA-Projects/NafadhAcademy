@@ -966,11 +966,9 @@
 
         <div class="metric-card">
           <span class="metric-value star" style="color: #f59e0b;">
-            {{ selectedTrainer?.rating != null &&
-            selectedTrainer?.rating !== '—' &&
-            selectedTrainer?.rating !== 'غير متوفر'
-            ? formatRating(selectedTrainer?.rating) + ' / 5.0'
-            : 'غير متوفر' }}
+            {{ selectedTrainer?.feedback?.averageOverall != null
+    ? (selectedTrainer.feedback.averageOverall | number:'1.2-2') + ' / 5'
+    : 'غير متوفر' }}
           </span>
           <span class="metric-label">
             متوسط تقييم المتدربين العام للمدرب
@@ -1033,7 +1031,8 @@
       <div class="table-card" style="margin-top: 24px;">
         <div class="section-badge-header"
           style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
-          <span class="badge-total-results">إجمالي التقييمات: {{ filteredTrainerReviewsList.length }} متدربين</span>
+          <span class="badge-total-results">إجمالي التقييمات:
+{{ selectedTrainer?.feedback?.responseCount ?? 'غير متوفر' }} استجابة</span>
           <div style="text-align: left;">
             <h3 class="section-card-title" style="margin: 0; color: #0D1C8C; font-size: 1.15rem; font-weight: 800;">
               تقييم المتدربين للمدرب (سجل استبيانات المتدربين)

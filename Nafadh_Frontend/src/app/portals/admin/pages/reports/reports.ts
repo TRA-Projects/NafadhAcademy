@@ -389,94 +389,96 @@ get totalCompanyTrainees(): number {
 }
 
 
-  loadCompaniesData() {
+ loadCompaniesData() {
   this.isLoading.set(true);
 
   this.api.getAdminCompaniesSummary().subscribe({
     next: (summary: any) => {
-      const reportCompanies = summary.companies ?? [];
+      const reportCompanies = Array.isArray(summary?.companies)
+        ? summary.companies
+        : [];
 
-      // تفاصيل البرامج والمشرفين من API القديم
+      const buildCompanies = (oldCompanies: any[] = []) => {
+        const detailsMap = new Map<number, any>(
+          oldCompanies.map((c: any) => [Number(c.companyId), c])
+        );
+
+        this.allCompaniesData = reportCompanies.map((c: any) => {
+          const details = detailsMap.get(Number(c.companyId));
+
+          const supervisor = details?.supervisors?.[0];
+          const supervisorName = supervisor
+            ? (supervisor.fullName ?? supervisor.user?.fullName ?? null)
+            : (details?.supervisorName ?? null);
+
+          return {
+            id: c.companyId,
+            companyId: c.companyId,
+            name: c.companyName ?? 'غير متوفر',
+            commercialRegister: c.commercialRegister ?? '—',
+            workField: c.workField ?? 'غير متوفر',
+            city: details?.city ??
+              (c.address ? c.address.split('،')[0] : 'غير متوفر'),
+            address: c.address ?? '—',
+            phone: c.phone ?? '—',
+            email: c.email ?? '—',
+            website: details?.website ?? '',
+            capacity: c.capacity,
+            status: c.status,
+            rejectionReason: details?.rejectionReason ?? null,
+            ratingScore: details?.ratingScore ?? null,
+            notes: details?.notes ?? '',
+            supervisorName,
+
+            programsCount: c.programsCount,
+            batchesCount: c.batchesCount,
+            traineesCount: c.traineesCount,
+
+            supervisors: details?.supervisors ?? [],
+
+            programs: (c.programs ?? []).map((p: any) => ({
+              id: p.programId,
+              name: p.programName ?? 'غير متوفر',
+              track: p.trackName ?? '—',
+              batchesCount: p.batchesCount,
+              traineesCount: p.traineesCount,
+
+              batches: (p.batches ?? []).map((b: any) => ({
+                id: b.batchId,
+                name: b.batchName,
+                dates: b.startDate
+                  ? String(b.startDate).split('T')[0]
+                  : '—',
+                endDate: b.endDate
+                  ? String(b.endDate).split('T')[0]
+                  : '—',
+                traineesCount: b.traineesCount,
+                programName: p.programName ?? 'غير متوفر'
+              }))
+            }))
+          };
+        });
+
+        this.applyCompanyFilters();
+        this.isLoading.set(false);
+        this.cdr.detectChanges();
+      };
+
       this.api.getCompanies().subscribe({
         next: (res: any) => {
           const oldCompanies = Array.isArray(res)
             ? res
             : (res?.items ?? []);
 
-          const detailsMap = new Map<number, any>(
-            oldCompanies.map((c: any) => [Number(c.companyId), c])
-          );
-
-          this.allCompaniesData = reportCompanies.map((c: any) => {
-            const details = detailsMap.get(Number(c.companyId));
-
-            const supervisor = details?.supervisors?.[0];
-            const supervisorName = supervisor
-              ? (supervisor.fullName ?? supervisor.user?.fullName ?? null)
-              : (details?.supervisorName ?? null);
-
-            return {
-              id: c.companyId,
-              companyId: c.companyId,
-              name: c.companyName ?? 'غير متوفر',
-              commercialRegister: c.commercialRegister ?? '—',
-              workField: c.workField ?? 'غير متوفر',
-              city: details?.city ??
-                (c.address ? c.address.split('،')[0] : 'غير متوفر'),
-              address: c.address ?? '—',
-              phone: c.phone ?? '—',
-              email: c.email ?? '—',
-              website: details?.website ?? '',
-              capacity: c.capacity,
-              status: c.status,
-              rejectionReason: details?.rejectionReason ?? null,
-
-              // لا نعرض تقييمات غير موجودة
-              ratingScore: details?.ratingScore ?? null,
-
-              notes: details?.notes ?? '',
-              supervisorName,
-
-              // الأعداد المعتمدة من API التقارير الجديد
-              programsCount: c.programsCount,
-              batchesCount: c.batchesCount,
-              traineesCount: c.traineesCount,
-
-              // تفاصيل البرامج فقط من API القديم
-              supervisors: details?.supervisors ?? [],
-              // البرامج والدفعات من API التقارير الجديد
-programs: (c.programs ?? []).map((p: any) => ({
-  id: p.programId,
-  name: p.programName ?? 'غير متوفر',
-  track: p.trackName ?? '—',
-
-  batchesCount: p.batchesCount,
-  traineesCount: p.traineesCount,
-
-  batches: (p.batches ?? []).map((b: any) => ({
-    id: b.batchId,
-    name: b.batchName,
-    dates: b.startDate
-      ? String(b.startDate).split('T')[0]
-      : '—',
-    endDate: b.endDate
-      ? String(b.endDate).split('T')[0]
-      : '—',
-    traineesCount: b.traineesCount,
-    programName: p.programName ?? 'غير متوفر'
-  }))
-}))
-            };
-          });
-
-          this.applyCompanyFilters();
-          this.isLoading.set(false);
-          this.cdr.detectChanges();
+          buildCompanies(oldCompanies);
         },
         error: (err) => {
-          console.error('Company details error:', err);
-          this.isLoading.set(false);
-          this.cdr.detectChanges();
+          console.warn(
+            'Optional company details unavailable:',
+            err
+          );
+
+          buildCompanies();
         }
       });
     },
@@ -624,9 +626,6 @@ programs: (c.programs ?? []).map((p: any) => ({
         r.totalPages = r.TotalPages ?? r.totalPages ?? (Math.ceil(r.totalCount / this.pageSize) || 1);
         r.pageNumber = r.PageNumber ?? r.pageNumber ?? this.currentPageNumber;
 
-        if (this.selectedBatch) {
-          this.selectedBatch.traineesCount = r.totalCount;
-        }
       }
 
       this.report.set(r);
@@ -1056,34 +1055,52 @@ getTrainerAttendanceMonthWeeks(): {
  }
 
   openTrainerModal(trainer: any) {
-  this.selectedTrainer = trainer;
-  this.selectedTrainer.kpis = null;
   const trainerId = Number(trainer?.id);
 
-if (trainerId > 0) {
+  if (!trainer || !Number.isInteger(trainerId) || trainerId <= 0) {
+    return;
+  }
+
+  this.selectedTrainer = {
+    ...trainer,
+    kpis: null,
+    feedback: null,
+    allReviews: [],
+    traineeReviews: []
+  };
+
+  this.trainerReviewsPage = 1;
+  this.trainerReviewSearch = '';
+  this.trainerView = 'details';
+
+  // 1. مؤشرات أداء المدرب
   this.api.getTrainerKpis(trainerId).subscribe({
     next: (res: any) => {
-      if (this.selectedTrainer?.id === trainer.id) {
-        this.selectedTrainer.kpis = res;
-        this.cdr.detectChanges();
-      }
+      if (Number(this.selectedTrainer?.id) !== trainerId) return;
+
+      this.selectedTrainer.kpis = res;
+      this.cdr.detectChanges();
     },
     error: (err: any) => {
       console.error('Failed to load trainer KPIs:', err);
     }
   });
-}
 
-  if (!this.selectedTrainer) return;
+  // 2. تقييمات المتدربين الحقيقية
+  this.api.getTrainerFeedback(trainerId).subscribe({
+  next: (res: any) => {
+    if (Number(this.selectedTrainer?.id) !== trainerId) return;
 
-  this.trainerReviewsPage = 1;
-  this.trainerReviewSearch = '';
+    this.selectedTrainer.feedback = res;
 
-  // لا نعرض تقييمات وهمية
-  this.selectedTrainer.allReviews = [];
-  this.selectedTrainer.traineeReviews = [];
+    console.log('Trainer Feedback:', res);
+    this.cdr.detectChanges();
+  },
+  error: (err: any) => {
+    console.error('Failed to load trainer feedback:', err);
+  }
+});
 
-  this.trainerView = 'details';
   this.cdr.detectChanges();
 }
 
@@ -1639,9 +1656,9 @@ if (trainerId > 0) {
     const dataRows = rows.map(t => [
       t.traineeName ?? '',
       t.major ?? '',
-      (t.attendanceRate ?? 0) + '%',
-      (t.technicalScore ?? 0) + '%',
-      (t.behavioralScore ?? 0) + '%',
+      t.attendanceRate != null ? `${t.attendanceRate}%` : 'غير متوفر',
+      t.technicalScore != null ? `${t.technicalScore}%` : 'غير متوفر',
+      t.behavioralScore != null ? `${t.behavioralScore}%` : 'غير متوفر',
       t.level ?? ''
     ]);
     const csvContent = '\uFEFF' + [headers.join(','), ...dataRows.map(e => e.join(','))].join('\n');
