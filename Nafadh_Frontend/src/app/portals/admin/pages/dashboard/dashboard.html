@@ -402,7 +402,7 @@
           <div class="tp-breadcrumb">
             <span class="tp-crumb-link" (click)="closeTopPerformersPage()">لوحة التحكم التنفيذية</span>
             <span>/</span>
-            <span class="tp-crumb-active">قائمة المتدربين المتميزين لهذا الشهر فقط</span>
+            <span class="tp-crumb-active">قائمة المتدربين الأعلى أداءً</span>
           </div>
           <button type="button" class="tp-back-btn" (click)="closeTopPerformersPage()">
             <span>→</span>
@@ -413,12 +413,12 @@
         <div class="tp-hero-card">
           <div class="tp-hero-banner">
             <div>
-              <div class="tp-banner-kicker">قائمة التميز الشهري · منظومة نفاذ للتدريب</div>
-              <h2 class="tp-banner-prog">⭐ المتدربون المتميزون لهذا الشهر ({{ allTopPerformers().length }} متدرباً)</h2>
+              <div class="tp-banner-kicker">قائمة المتدربين الأعلى أداءً · منظومة نفاذ للتدريب</div>
+              <h2 class="tp-banner-prog">⭐ المتدربون الأعلى أداءً ({{ allTopPerformers().length }} متدرباً)</h2>
             </div>
             <div class="tp-banner-meta">
               <div>متوسط أداء المتميزين: <strong>{{ summary()?.topPerformersAvgScore ?? 0 }}%</strong></div>
-              <div>معيار التميز: الأداء التقني والالتزام ≥ 80%</div>
+              <div>معيار التميز: النتيجة النهائية الموزونة 85% فأعلى</div>
             </div>
           </div>
         </div>
@@ -681,7 +681,7 @@
 
               <!-- 1. فلتر شدة الخطورة -->
               <div style="display:flex; align-items:center; gap:6px;">
-                <span style="font-size:12px; font-weight:600; color:#7f1d1d;">شدة التعثر:</span>
+                <span style="font-size:12px; font-weight:600; color:#7f1d1d;">تصنيف الحضور:</span>
                 <select [value]="riskSeverity()" (change)="onRiskSeverityChange($event)"
                   style="height:34px; padding:0 8px; border-radius:6px; border:1px solid #cbd5e1; background:#ffffff; font-size:12px; color:#1e293b; cursor:pointer;">
                   <option value="all">جميع الحالات</option>
@@ -990,7 +990,7 @@
             <div class="stat-info">
               <div class="stat-label">المتدربون المتميزون</div>
               <div class="stat-value">{{ summary()?.topPerformersCount ?? 0 }}</div>
-              <div class="stat-subtext">هذا الشهر (اضغط للعرض)</div>
+              <div class="stat-subtext">أعلى النتائج (اضغط للعرض)</div>
             </div>
           </div>
 
@@ -1158,7 +1158,7 @@
           <!-- المتدربون المتميزون -->
           <div class="list-panel-card">
             <div class="list-panel-header">
-              <h3 class="list-panel-title">⭐ المتدربون المتميزون هذا الشهر</h3>
+              <h3 class="list-panel-title">⭐ المتدربون الأعلى أداءً</h3>
               <button type="button" class="panel-link-btn" (click)="openTopPerformersPage()">عرض الكل</button>
             </div>
 
