@@ -378,6 +378,67 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
     return Math.max(1, Math.ceil(total / this.activityPageSize));
   });
 
+  // Pagination - Top Performers
+topPage = signal<number>(1);
+readonly topPageSize = 10;
+
+totalTopPages = computed(() =>
+  Math.max(1, Math.ceil(this.filteredTopPerformers().length / this.topPageSize))
+);
+
+paginatedTopPerformers = computed(() => {
+  const start = (this.topPage() - 1) * this.topPageSize;
+  return this.filteredTopPerformers().slice(start, start + this.topPageSize);
+});
+
+visibleTopPages = computed(() => {
+  const total = this.totalTopPages();
+  const current = this.topPage();
+  const start = Math.max(1, Math.min(current - 2, total - 4));
+
+  return Array.from(
+    { length: Math.min(5, total) },
+    (_, i) => start + i
+  );
+});
+
+goToTopPage(page: number): void {
+  if (page < 1 || page > this.totalTopPages()) return;
+  this.topPage.set(page);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+
+// Pagination - At Risk
+riskPage = signal<number>(1);
+readonly riskPageSize = 10;
+
+totalRiskPages = computed(() =>
+  Math.max(1, Math.ceil(this.filteredAtRiskTrainees().length / this.riskPageSize))
+);
+
+paginatedAtRiskTrainees = computed(() => {
+  const start = (this.riskPage() - 1) * this.riskPageSize;
+  return this.filteredAtRiskTrainees().slice(start, start + this.riskPageSize);
+});
+
+visibleRiskPages = computed(() => {
+  const total = this.totalRiskPages();
+  const current = this.riskPage();
+  const start = Math.max(1, Math.min(current - 2, total - 4));
+
+  return Array.from(
+    { length: Math.min(5, total) },
+    (_, i) => start + i
+  );
+});
+
+goToRiskPage(page: number): void {
+  if (page < 1 || page > this.totalRiskPages()) return;
+  this.riskPage.set(page);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
   visibleActivityPages = computed(() => {
     const total = this.totalActivityPages();
     const current = this.activityPage();
