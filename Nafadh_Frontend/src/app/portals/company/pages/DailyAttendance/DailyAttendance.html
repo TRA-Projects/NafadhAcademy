@@ -216,7 +216,41 @@
                             </div>
                         </th>
 
-                        <th>التخصص</th>
+                        <th class="trainer-filter-heading">
+                            <div class="trainer-filter-header">
+                                <span>التخصص</span>
+                                <details class="trainer-filter-menu" #trainerFilterMenu #specialtyFilterMenu>
+                                    <summary class="trainer-filter-trigger" title="تصفية حسب التخصص"
+                                        (click)="positionTrainerFilter($event)">
+                                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <path d="M4 7h16M7 12h10m-7 5h4" />
+                                        </svg>
+                                        @if (selectedDaySpecialty() !== null) {
+                                        <span class="trainer-filter-active-dot"></span>
+                                        }
+                                    </summary>
+                                    <div class="trainer-filter-panel" [style.top.px]="trainerFilterTop()"
+                                        [style.left.px]="trainerFilterLeft()" (click)="$event.stopPropagation()">
+                                        <input type="search" class="trainer-filter-search" placeholder="ابحث عن تخصص..."
+                                            [ngModel]="specialtySearch()" (ngModelChange)="specialtySearch.set($event)" />
+                                        <div class="trainer-filter-options">
+                                            <button type="button" class="all-trainers-option"
+                                                [class.selected]="selectedDaySpecialty() === null"
+                                                (click)="selectedDaySpecialty.set(null); specialtyFilterMenu.open = false">جميع التخصصات</button>
+                                            @for (specialty of filteredSpecialtyOptions(); track specialty) {
+                                            <button type="button"
+                                                [class.selected]="selectedDaySpecialty() === specialty"
+                                                (click)="selectedDaySpecialty.set(specialty); specialtyFilterMenu.open = false">{{
+                                                specialty }}</button>
+                                            } @empty {
+                                            <span class="trainer-filter-empty">لا توجد نتائج</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </details>
+                            </div>
+                        </th>
 
                         <th>حالة اليوم</th>
 
