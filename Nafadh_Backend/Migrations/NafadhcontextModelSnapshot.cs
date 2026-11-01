@@ -2645,6 +2645,10 @@ namespace Nafadh_Backend.Migrations
                     b.Property<decimal>("ExperienceYears")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<string>("LinkedInUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
                     b.Property<string>("ProfileImageUrl")
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)");
