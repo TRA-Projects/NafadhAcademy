@@ -203,14 +203,14 @@ export class CompanySupervisors implements OnInit {
           { monthlyEvaluations: 2, attendanceRate: 72, assignedTrainees: 0 },
           { monthlyEvaluations: 5, attendanceRate: 91, assignedTrainees: 0 },
           { monthlyEvaluations: 3, attendanceRate: 79, assignedTrainees: 0 },
-          { monthlyEvaluations: 7, attendanceRate: 97, assignedTrainees: 0 }
+          { monthlyEvaluations: 7, attendanceRate: 97, assignedTrainees: 0 },
+          { monthlyEvaluations: 4, attendanceRate: 85, assignedTrainees: 0 }
         ];
 
         this.supervisors = data.map((item, index) => {
           const id = Number(item.supervisorId ?? item.id ?? index + 1);
           const status = item.status ?? 'Active';
-          const stats = item.stats ?? fakeStats[index % fakeStats.length];0 },
-          { monthlyEvaluations: 4, attendanceRate: 85, assignedTrainees: 
+          const stats = item.stats ?? fakeStats[index % fakeStats.length];
 
           return {
             supervisorId: id,
