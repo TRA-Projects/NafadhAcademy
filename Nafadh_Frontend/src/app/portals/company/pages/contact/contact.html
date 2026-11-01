@@ -17,33 +17,101 @@
 
   <div class="contact-workspace" [class.contact-mobile-open]="!!active() || opening()">
     <aside data-guide="company-contact-sidebar" class="contact-sidebar" aria-label="قائمة المحادثات">
-      <div class="sidebar-head"><div><h3>المحادثات</h3><p>جميع مراسلاتك في مكان واحد</p></div><button class="contact-refresh" type="button" (click)="loadConversations()" [disabled]="loading() || sending() || creating()" title="تحديث المحادثات" aria-label="تحديث المحادثات">↻</button></div>
+      <div class="sidebar-head"><div><h3>المحادثات</h3><p>جميع مراسلاتك في مكان واحد</p></div><button class="contact-refresh" type="button" (click)="refreshMailbox()" [disabled]="loading() || sending() || creating()" title="تحديث المحادثات" aria-label="تحديث المحادثات">↻</button></div>
+      <div class="contact-tabs mailbox-tabs" role="group" aria-label="أقسام المراسلات">
+        <button type="button" [class.selected]="mailboxTab() === 'conversations'" (click)="setMailboxTab('conversations')">المحادثات ({{ totalConversations() }})</button>
+        <button type="button" [class.selected]="mailboxTab() === 'drafts'" (click)="setMailboxTab('drafts')">المسودات ({{ savedDrafts().length }})</button>
+        <button type="button" [class.selected]="mailboxTab() === 'trash'" (click)="setMailboxTab('trash'); resetFilters()">المحذوفات ({{ trashCount() }})</button>
+      </div>
       <div class="contact-filters" data-guide="company-contact-filters"><label class="contact-search"><span aria-hidden="true">⌕</span><input class="nfd-input" [ngModel]="searchText" (ngModelChange)="searchText = $event" placeholder="ابحث عن محادثة..." aria-label="البحث في المحادثات" /></label><div class="contact-tabs" aria-label="تصفية المحادثات"><button type="button" [attr.aria-pressed]="filter() === 'all'" [class.selected]="filter() === 'all'" (click)="filter.set('all')">الكل</button><button type="button" [attr.aria-pressed]="filter() === 'unread'" [class.selected]="filter() === 'unread'" (click)="filter.set('unread')">غير المقروءة <span *ngIf="totalUnread() > 0">{{ unreadConversations() }}</span></button></div></div>
-      <div class="contact-list" data-guide="company-contact-list">
-        @if (loading()) { <div class="contact-placeholder" role="status"><span class="contact-spinner"></span><p>جاري تحميل المحادثات...</p></div> }
+      @if (trashError() && !hiddenNotices().has('trashError')) {
+        <div class="contact-alert" role="status"><span>{{ trashError() }}</span><button type="button" (click)="loadTrash()">إعادة المحاولة</button></div>
+      }
+      @if (mailboxTab() === 'drafts' && draftError() && !hiddenNotices().has('draftError')) {
+        <div class="contact-alert" role="alert"><span>{{ draftError() }}</span><button type="button" (click)="loadDrafts()">إعادة المحاولة</button></div>
+      }
+      <div class="contact-list" [class.contact-list-empty]="mailboxTab() === 'drafts' ? savedDrafts().length === 0 : filteredConversations().length === 0" data-guide="company-contact-list">
+        @if (mailboxTab() === 'drafts') {
+          @for (draft of savedDrafts(); track draft.id) {
+            <div class="mailbox-draft">
+              <button type="button" class="contact-thread" (click)="openDraft(draft)">
+                <span class="thread-avatar">✎</span><span class="thread-body">
+                  <strong>{{ draft.subject || 'مسودة بدون عنوان' }}</strong>
+                  <span class="thread-category">{{ draft.conversationId ? 'مسودة رد' : 'محادثة لم تُرسل' }}</span>
+                  <span class="thread-preview">{{ draft.content }}</span>
+                  <span class="thread-date">{{ draft.updatedAt | date:'dd/MM/yyyy • HH:mm' }}</span>
+                </span>
+              </button>
+              <button type="button" class="contact-text-button" (click)="removeDraft(draft)">حذف المسودة</button>
+            </div>
+          } @empty { @if (!draftError()) { <div class="contact-placeholder"><h4>لا توجد مسودات محفوظة</h4><p>احفظ ردًا كمسودة أو أغلق نافذة محادثة جديدة لحفظها.</p></div> } }
+        } @else if (loading()) { <div class="contact-placeholder" role="status"><span class="contact-spinner"></span><p>جاري تحميل المحادثات...</p></div> }
         @else {
           @for (c of filteredConversations(); track c.conversationId) {
             <button type="button" class="contact-thread" [class.active]="active()?.conversationId === c.conversationId" (click)="open(c.conversationId)" [disabled]="sending() || creating()" [attr.aria-current]="active()?.conversationId === c.conversationId ? 'true' : null">
               <span class="thread-avatar" aria-hidden="true">{{ (c.subject || 'م').charAt(0) }}</span>
               <span class="thread-body"><span class="thread-title"><strong>{{ c.subject }}</strong>@if (c.unreadCount > 0) { <span class="unread-count">{{ c.unreadCount }}</span> }</span><span class="thread-category">{{ c.category || 'استفسار عام' }}</span><span class="thread-preview">{{ c.lastMessagePreview || 'لا توجد رسائل بعد' }}</span><span class="thread-date">{{ c.lastMessageDate | date:'dd/MM/yyyy • HH:mm' }}</span></span>
             </button>
-          } @empty { <div class="contact-placeholder"><span class="placeholder-icon">⌕</span><h4>{{ searchText || filter() === 'unread' ? 'لا توجد نتائج مطابقة' : 'لا توجد محادثات بعد' }}</h4><p>{{ searchText || filter() === 'unread' ? 'جرّب تغيير البحث أو الفلتر' : 'ابدأ محادثتك الأولى مع الهيئة' }}</p>@if (searchText || filter() === 'unread') { <button type="button" class="contact-text-button" (click)="resetFilters()">مسح الفلاتر</button> } @else { <button type="button" class="contact-text-button" (click)="openNew()">بدء محادثة</button> }</div> }
+          } @empty {
+            <div class="contact-placeholder">
+              <span class="placeholder-icon" aria-hidden="true">⌕</span>
+              @if (searchText || filter() === 'unread') {
+                <h4>لا توجد نتائج مطابقة</h4><p>جرّب تغيير البحث أو الفلتر</p>
+                <button type="button" class="contact-text-button" (click)="resetFilters()">مسح الفلاتر</button>
+              } @else if (mailboxTab() === 'trash') {
+                <h4>لا توجد رسائل في المحذوفات</h4>
+              } @else {
+                <h4>لا توجد محادثات بعد</h4><p>ابدأ محادثتك الأولى مع الهيئة</p>
+                <button type="button" class="contact-text-button" (click)="openNew()">بدء محادثة</button>
+              }
+            </div>
+          }
         }
       </div>
-      <div class="sidebar-footer">{{ filteredConversations().length }} من أصل {{ totalConversations() }} محادثة</div>
+      <div class="sidebar-footer">{{ filteredConversations().length }} من أصل {{ mailboxTab() === 'trash' ? trashCount() : totalConversations() }} محادثة</div>
     </aside>
 
     <main data-guide="company-contact-chat" class="contact-chat" aria-label="تفاصيل المحادثة">
       @if (opening()) { <div class="contact-placeholder" role="status"><span class="contact-spinner"></span><p>جاري فتح المحادثة...</p><button type="button" class="contact-text-button" (click)="clearActive()">العودة للقائمة</button></div> }
       @else if (active(); as conv) {
-        <div class="chat-head"><button type="button" class="contact-back" (click)="clearActive()" aria-label="العودة إلى المحادثات">→</button><span class="chat-avatar" aria-hidden="true">هـ</span><div class="chat-heading"><h3>{{ conv.subject }}</h3><p>{{ conv.startedByName || 'محادثة مع الهيئة' }}</p></div><span class="chat-category">{{ conv.category || 'استفسار عام' }}</span></div>
+        <div class="chat-head"><button type="button" class="contact-back" (click)="clearActive()" aria-label="العودة إلى المحادثات">→</button><span class="chat-avatar" aria-hidden="true">هـ</span><div class="chat-heading"><h3>{{ conv.subject }}</h3><p>{{ conv.startedByName || 'محادثة مع الهيئة' }}</p></div><div class="contact-delete-wrap">
+        @if (isTrashed(conv.conversationId)) {
+          <button type="button" class="contact-text-button" (click)="restoreChat()" [disabled]="deleting()">استرداد المحادثة</button>
+          @if (canDeletePermanently(conv.conversationId)) {
+            <button type="button" class="contact-delete" (click)="deleteChat()" [disabled]="deleting()">حذف نهائي للطرفين</button>
+          }
+        } @else {
+          <button type="button" class="contact-delete contact-delete-icon" title="نقل إلى المحذوفات لديّ" aria-label="نقل المحادثة إلى المحذوفات لديّ" (click)="trashChat()" [disabled]="!trashReady() || !!trashError() || sending() || creating() || deleting() || savingDraft()"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6"/></svg></button>
+        }
+        @if (deleteConfirmation(); as confirmation) {
+          @if (confirmation.id === conv.conversationId) {
+            <div class="contact-delete-popover" role="dialog" aria-label="تأكيد حذف المحادثة">
+              <strong>{{ confirmation.permanent ? 'حذف نهائي للطرفين؟' : 'نقل إلى المحذوفات لديك؟' }}</strong>
+              <p>{{ confirmation.permanent ? 'ستُحذف المحادثة ورسائلها للطرفين، ولا يمكن استردادها.' : 'ستبقى المحادثة عند الطرف الآخر، ويمكنك استردادها من المحذوفات.' }}</p>
+              <div class="contact-confirm-actions">
+                <button type="button" class="contact-delete" (click)="confirmDeletion()" [disabled]="deleting()">{{ confirmation.permanent ? 'حذف نهائي' : 'تأكيد النقل' }}</button>
+                <button type="button" class="contact-text-button" (click)="cancelDeleteConfirmation()">إلغاء</button>
+              </div>
+            </div>
+          }
+        }
+        </div><span class="chat-category">{{ conv.category || 'استفسار عام' }}</span></div>
         <div class="chat-messages" #messagesContainer tabindex="0" aria-label="سجل الرسائل">
           <div class="chat-date-divider"><span>سجل الرسائل</span></div>
           @for (m of conv.messages; track m.messageId) {
             <div class="message-line" [class.mine]="m.senderId === (auth.userId ?? -1)"><div class="message-bubble"><strong>{{ m.senderName || (m.senderId === auth.userId ? 'أنت' : 'الهيئة') }}</strong><p dir="auto">{{ m.content }}</p><time>{{ m.sentDate | date:'dd/MM/yyyy • HH:mm' }}</time></div></div>
           } @empty { <div class="contact-placeholder"><span class="placeholder-icon">✉</span><h4>لا توجد رسائل بعد</h4><p>اكتب أول رسالة لبدء التواصل.</p></div> }
         </div>
-        <form data-guide="company-contact-composer" class="chat-composer" (ngSubmit)="send()"><label for="contact-reply" class="sr-only">نص الرسالة</label><textarea id="contact-reply" class="nfd-input" name="reply" [(ngModel)]="replyText" rows="2" maxlength="5000" placeholder="اكتب رسالتك هنا..." (keydown.control.enter)="$event.preventDefault(); send()" [disabled]="sending()"></textarea><button class="nfd-btn primary" type="submit" [disabled]="!replyText.trim() || replyText.trim().length > 5000 || sending()">{{ sending() ? 'جاري الإرسال...' : 'إرسال الرسالة' }} <span aria-hidden="true">↗</span></button><small>Ctrl + Enter للإرسال</small></form>
+        @if (isTrashed(conv.conversationId)) {
+          <div class="contact-success" role="status">هذه المحادثة في المحذوفات لديك فقط. استردها للرد عليها.</div>
+        } @else {
+        <form data-guide="company-contact-composer" class="chat-composer" (ngSubmit)="send()"><label for="contact-reply" class="sr-only">نص الرسالة</label><textarea id="contact-reply" class="nfd-input" name="reply" [(ngModel)]="replyText" rows="2" maxlength="5000" placeholder="اكتب رسالتك هنا..." (keydown.control.enter)="$event.preventDefault(); send()" [disabled]="sending() || deleting()"></textarea><button class="nfd-btn primary" type="submit" [disabled]="!replyText.trim() || replyText.trim().length > 5000 || sending()">{{ sending() ? 'جاري الإرسال...' : 'إرسال الرسالة' }} <span aria-hidden="true">↗</span></button><button type="button" class="contact-text-button" (click)="saveReplyDraft()" [disabled]="!replyText.trim() || sending() || deleting()">حفظ كمسودة</button><small>Ctrl + Enter للإرسال</small></form>
+        }
+      } @else if (mailboxTab() === 'trash') {
+        <div class="contact-welcome"><div class="welcome-symbol" aria-hidden="true">✉</div>
+          <h3>{{ trashCount() ? 'المحادثات المحذوفة' : 'لا توجد رسائل في المحذوفات' }}</h3>
+          @if (trashCount()) { <p>اختر محادثة من المحذوفات لعرضها أو استردادها.</p> }
+        </div>
       } @else {
         <div class="contact-welcome"><div class="welcome-symbol" aria-hidden="true">✉</div><span class="contact-eyebrow">تواصل مباشر وآمن</span><h3>كل محادثاتك في مكان واحد</h3><p>اختر محادثة من القائمة لعرض الرسائل والرد عليها، أو ابدأ محادثة جديدة مع الهيئة.</p><button type="button" class="nfd-btn primary" (click)="openNew()">＋ بدء محادثة جديدة</button></div>
       }
@@ -51,6 +119,6 @@
   </div>
 
   @if (showNew()) {
-    <div class="nfd-modal-bg contact-overlay" (click)="closeNew()" (keydown.escape)="closeNew()"><div class="nfd-modal company-contact-new-modal" #newDialog (keydown)="trapFocus($event)" role="dialog" aria-modal="true" aria-labelledby="new-conversation-title" (click)="$event.stopPropagation()"><div class="modal-heading"><div><span class="contact-eyebrow">رسالة جديدة</span><h3 id="new-conversation-title">بدء محادثة مع الهيئة</h3><p>أدخل تفاصيل طلبك لتسهيل متابعة المحادثة.</p></div><button type="button" class="modal-close" (click)="closeNew()" aria-label="إغلاق" [disabled]="creating()">×</button></div>@if (modalError()) { <div class="contact-alert" role="alert">{{ modalError() }}</div> }<form (ngSubmit)="startConversation()"><fieldset [disabled]="creating()"><label for="new-category">تصنيف المحادثة</label><select id="new-category" name="category" class="nfd-input" [(ngModel)]="newConv.category">@for (c of categories; track c) { <option [value]="c">{{ c }}</option> }</select><label for="new-subject">عنوان المحادثة <span>*</span></label><input id="new-subject" name="subject" class="nfd-input" [(ngModel)]="newConv.subject" maxlength="150" required placeholder="مثال: استفسار عن برنامج تدريبي" /><label for="new-message">تفاصيل الرسالة <span>*</span></label><textarea id="new-message" name="firstMessage" class="nfd-input" [(ngModel)]="newConv.firstMessage" maxlength="5000" rows="5" required placeholder="اكتب تفاصيل استفسارك بشكل واضح..."></textarea><div class="modal-actions"><button type="button" class="nfd-btn secondary" (click)="closeNew()" [disabled]="creating()">إلغاء</button><button type="submit" class="nfd-btn primary" [disabled]="creating() || !newConv.subject.trim() || !newConv.firstMessage.trim() || newConv.subject.trim().length > 150 || newConv.firstMessage.trim().length > 5000">{{ creating() ? 'جاري الإنشاء...' : 'إرسال وبدء المحادثة' }}</button></div></fieldset></form></div></div>
+    <div class="nfd-modal-bg contact-overlay" (click)="closeNew()" (keydown.escape)="closeNew()"><div class="nfd-modal company-contact-new-modal" #newDialog (keydown)="trapFocus($event)" role="dialog" aria-modal="true" aria-labelledby="new-conversation-title" (click)="$event.stopPropagation()"><div class="modal-heading"><div><span class="contact-eyebrow">رسالة جديدة</span><h3 id="new-conversation-title">بدء محادثة مع الهيئة</h3><p>أدخل تفاصيل طلبك لتسهيل متابعة المحادثة.</p></div><button type="button" class="modal-close" (click)="closeNew()" aria-label="إغلاق" [disabled]="creating()">×</button></div>@if (modalError()) { <div class="contact-alert" role="alert">{{ modalError() }}</div> }<form (ngSubmit)="startConversation()"><fieldset [disabled]="creating()"><label for="new-category">تصنيف المحادثة</label><select id="new-category" name="category" class="nfd-input" [(ngModel)]="newConv.category">@for (c of categories; track c) { <option [value]="c">{{ c }}</option> }</select><label for="new-subject">عنوان المحادثة <span>*</span></label><input id="new-subject" name="subject" class="nfd-input" [(ngModel)]="newConv.subject" maxlength="150" required placeholder="مثال: استفسار عن برنامج تدريبي" /><label for="new-message">تفاصيل الرسالة <span>*</span></label><textarea id="new-message" name="firstMessage" class="nfd-input" [(ngModel)]="newConv.firstMessage" maxlength="5000" rows="5" required placeholder="اكتب تفاصيل استفسارك بشكل واضح..."></textarea><div class="modal-actions"><button type="button" class="nfd-btn secondary" (click)="closeNew()" [disabled]="creating()">حفظ المسودة وإغلاق</button><button type="submit" class="nfd-btn primary" [disabled]="creating() || !newConv.subject.trim() || !newConv.firstMessage.trim() || newConv.subject.trim().length > 150 || newConv.firstMessage.trim().length > 5000">{{ creating() ? 'جاري الإنشاء...' : 'إرسال وبدء المحادثة' }}</button></div></fieldset></form></div></div>
   }
 </section>

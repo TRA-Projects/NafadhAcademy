@@ -100,7 +100,7 @@ namespace Nafadh_Backend.DTOs
         public int StartedByUserId { get; set; }
 
         [Required]
-        [MaxLength(1000)]
+        [MaxLength(5000)]
         public string FirstMessage { get; set; } = string.Empty;
 
 
@@ -122,7 +122,7 @@ namespace Nafadh_Backend.DTOs
         public int? ReceiverUserId { get; set; }
 
         [Required]
-        [MaxLength(1000)]
+        [MaxLength(5000)]
         public string Content { get; set; } = string.Empty;
     }
 

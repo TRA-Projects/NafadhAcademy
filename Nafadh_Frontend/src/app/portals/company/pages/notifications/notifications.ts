@@ -17,7 +17,7 @@ const CATEGORIES: { key: Category; label: string }[] = [
   { key: 'system', label: 'عام' },
 ];
 const ENTITY_RULES: { key: Category; pattern: RegExp }[] = [
-  { key: 'warning', pattern: /warning/i }, { key: 'task', pattern: /task|submission|project/i },
+  { key: 'warning', pattern: /warning/i }, { key: 'task', pattern: /courseplan|batchassignment|task|submission|project/i },
   { key: 'message', pattern: /conversation|message|ticket|support/i },
   { key: 'evaluation', pattern: /evaluation|feedback|rubric/i },
   { key: 'attendance', pattern: /attendance|session|excuse/i },
@@ -109,6 +109,7 @@ export class CompanyNotifications implements OnInit {
     this.fetch(true);
   }
   private fetch(showSkeleton: boolean): void {
+    if (this.markingAll() || this.pendingIds().size > 0) return;
     this.error.set(null);
     this.actionError.set(null);
     if (showSkeleton) this.loading.set(true);
@@ -140,7 +141,7 @@ export class CompanyNotifications implements OnInit {
   isPending(id: number): boolean { return this.pendingIds().has(id); }
   markRead(item: NotificationDto): void {
     const id = item.notificationId;
-    if (item.isRead || this.isPending(id) || this.markingAll()) return;
+    if (this.loading() || this.refreshing() || item.isRead || this.isPending(id) || this.markingAll()) return;
     this.actionError.set(null);
     this.pendingIds.update(ids => new Set([...ids, id]));
     this.notificationService.markAsRead(id).pipe(finalize(() => {
@@ -157,7 +158,7 @@ export class CompanyNotifications implements OnInit {
     });
   }
   markAllRead(): void {
-    if (!this.unreadCount() || this.markingAll() || this.pendingIds().size) return;
+    if (this.loading() || this.refreshing() || !this.unreadCount() || this.markingAll() || this.pendingIds().size) return;
     this.actionError.set(null);
     this.markingAll.set(true);
     this.notificationService.markAllAsRead().pipe(finalize(() => this.markingAll.set(false))).subscribe({
@@ -197,7 +198,8 @@ export class CompanyNotifications implements OnInit {
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const day = new Date(date); day.setHours(0, 0, 0, 0);
     const days = Math.round((today.getTime() - day.getTime()) / 86400000);
-    if (days <= 0) return 'اليوم';
+    if (days < 0) return 'قادمة';
+    if (days === 0) return 'اليوم';
     if (days === 1) return 'أمس';
     if (days < 7) return 'هذا الأسبوع';
     return 'سابقًا';
@@ -205,7 +207,8 @@ export class CompanyNotifications implements OnInit {
   timeAgo(value: string): string {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return 'تاريخ غير متوفر';
-    const minutes = Math.floor(Math.max(0, Date.now() - date.getTime()) / 60000);
+    if (date.getTime() > Date.now()) return date.toLocaleString('ar-OM');
+    const minutes = Math.floor((Date.now() - date.getTime()) / 60000);
     if (minutes < 1) return 'منذ لحظات';
     if (minutes < 60) return `منذ ${minutes} دقيقة`;
     const hours = Math.floor(minutes / 60);

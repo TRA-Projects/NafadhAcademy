@@ -211,6 +211,16 @@ export class CompanyDailyAttendance implements OnInit {
     );
   });
 
+  selectedDaySpecialty = signal<string | null>(null);
+  specialtySearch = signal('');
+  filteredSpecialtyOptions = computed(() => {
+    const query = this.specialtySearch().trim().toLocaleLowerCase();
+    const specialties = [...new Set(this.trainers().map(trainer =>
+      trainer.specialty?.trim() || '—'
+    ))].sort((a, b) => a.localeCompare(b, 'ar'));
+    return specialties.filter(specialty => !query || specialty.toLocaleLowerCase().includes(query));
+  });
+
   trainers = signal<CompanyTrainerDto[]>([]);
 
   failedTrainerImages = signal<number[]>([]);
@@ -597,7 +607,8 @@ export class CompanyDailyAttendance implements OnInit {
 
 
   dayRows = computed(() => this.rows().filter(row =>
-    this.selectedDayTrainerId() === null || row.trainer.trainerId === this.selectedDayTrainerId()
+    (this.selectedDayTrainerId() === null || row.trainer.trainerId === this.selectedDayTrainerId()) &&
+    (this.selectedDaySpecialty() === null || (row.trainer.specialty?.trim() || '—') === this.selectedDaySpecialty())
   ));
 
   counts = computed(() => {

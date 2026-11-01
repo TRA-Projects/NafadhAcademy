@@ -1,3 +1,4 @@
+
 import { CommonModule } from '@angular/common';
 import { Component, ChangeDetectorRef, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -91,8 +92,21 @@ export class CompanySupervisors implements OnInit {
   averageAttendance = 0;
   supervisorsNeedingAttention = 0;
 
+  // نافذة إضافة وتعديل المشرف
   showAddModal = false;
   editingSupervisor = false;
+
+  // نافذة إضافة مدرب مستقلة
+  showTrainerModal = false;
+  savingTrainer = false;
+
+  newTrainer = {
+    userId: 0,
+    specialty: '',
+    experienceYears: 0,
+    biography: '',
+    cvUrl: ''
+  };
 
   showProfileModal = false;
   selectedProfileSupervisor: Supervisor | null = null;
@@ -318,6 +332,96 @@ export class CompanySupervisors implements OnInit {
       : parts[0][0] + parts[1][0];
   }
 
+  // فتح نافذة إضافة مدرب
+  openAddTrainerModal(): void {
+    this.newTrainer = {
+      userId: 0,
+      specialty: '',
+      experienceYears: 0,
+      biography: '',
+      cvUrl: ''
+    };
+
+    this.showTrainerModal = true;
+  }
+
+  // إغلاق نافذة إضافة مدرب
+  closeTrainerModal(): void {
+    this.showTrainerModal = false;
+    this.savingTrainer = false;
+  }
+
+  // إرسال بيانات المدرب إلى API
+  submitTrainer(): void {
+    if (!this.newTrainer.userId || this.newTrainer.userId <= 0) {
+      this.showToast('error', 'يرجى إدخال رقم حساب المستخدم الصحيح');
+      return;
+    }
+
+    if (!this.newTrainer.specialty.trim()) {
+      this.showToast('error', 'يرجى إدخال تخصص المدرب');
+      return;
+    }
+
+    if (
+      !Number.isFinite(Number(this.newTrainer.experienceYears)) ||
+      Number(this.newTrainer.experienceYears) < 0
+    ) {
+      this.showToast('error', 'يرجى إدخال سنوات خبرة صحيحة');
+      return;
+    }
+
+    const dto = {
+      userId: Number(this.newTrainer.userId),
+      specialty: this.newTrainer.specialty.trim(),
+      experienceYears: Number(this.newTrainer.experienceYears),
+      biography: this.newTrainer.biography.trim(),
+      cvUrl: this.newTrainer.cvUrl.trim() || null
+    };
+
+    this.savingTrainer = true;
+
+    this.companyApi.addTrainer(dto).subscribe({
+      next: () => {
+        this.savingTrainer = false;
+        this.closeTrainerModal();
+
+        this.showToast(
+          'success',
+          'تم إنشاء ملف المدرب بنجاح'
+        );
+
+        this.cdr.detectChanges();
+      },
+
+      error: (error: any) => {
+        this.savingTrainer = false;
+
+        console.error('Add trainer error:', error);
+        console.error('Server response:', error?.error);
+
+        if (error?.status === 409) {
+          this.showToast(
+            'error',
+            'هذا المستخدم لديه ملف مدرب مسبقاً'
+          );
+        } else if (error?.status === 400) {
+          this.showToast(
+            'error',
+            error?.error?.message || 'البيانات المرسلة غير صحيحة'
+          );
+        } else {
+          this.showToast(
+            'error',
+            'تعذر إنشاء ملف المدرب. راجعي بيانات الطلب والباك إند.'
+          );
+        }
+
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
   // الملف الشخصي للمشرف
   openSupervisorProfile(s: Supervisor): void {
     this.selectedProfileSupervisor = s;
@@ -399,7 +503,6 @@ export class CompanySupervisors implements OnInit {
               assignedIds.includes(t.id)
           );
 
-        // استرجاع التقييم المحفوظ لكل مدرب ومشرف
         const savedEvaluations = this.readLocalEvaluations();
 
         this.supervisorTrainers = this.supervisorTrainers.map(trainer => {
@@ -466,7 +569,6 @@ export class CompanySupervisors implements OnInit {
       : fallback;
   }
 
-  // حساب المتوسط تلقائياً
   getEvaluationAverage(trainer: EvaluationTrainer): string {
     const clarity = this.toEvaluationScore(trainer.explanationClarity);
     const interaction = this.toEvaluationScore(trainer.interactionAndSupport);
@@ -487,7 +589,6 @@ export class CompanySupervisors implements OnInit {
       : '0.00';
   }
 
-  // التقييمات المعروضة في تبويب السجل
   get evaluationHistory(): any[] {
     const query = this.evaluationSearch.trim().toLowerCase();
 
@@ -518,7 +619,6 @@ export class CompanySupervisors implements OnInit {
     this.activeView = 'evaluations';
   }
 
-  // فتح التقييم المحفوظ في نافذة التعديل
   editSavedEvaluation(evaluation: any): void {
     const supervisor = this.supervisors.find(
       item => item.supervisorId === Number(evaluation.supervisorId)
@@ -571,7 +671,6 @@ export class CompanySupervisors implements OnInit {
       : date.toLocaleString('ar-OM');
   }
 
-  // قراءة التقييمات الحالية والسابقة من التخزين المحلي
   private readLocalEvaluations(): any[] {
     try {
       const current = JSON.parse(
@@ -611,7 +710,6 @@ export class CompanySupervisors implements OnInit {
     }
   }
 
-  // حفظ التقييم أو تحديث التقييم السابق
   saveTrainerEvaluation(trainer: EvaluationTrainer): void {
     if (!this.selectedSupervisor || !trainer.currentRating) {
       this.showToast(
@@ -661,7 +759,6 @@ export class CompanySupervisors implements OnInit {
     };
 
     try {
-      // تحديث التقييم الموجود أو إضافة تقييم جديد
       const evaluations = this.readLocalEvaluations();
 
       const existingIndex = evaluations.findIndex(item =>
@@ -685,7 +782,6 @@ export class CompanySupervisors implements OnInit {
         JSON.stringify(evaluations)
       );
 
-      // إضافة سجل نشاط منفصل دون الانتقال إلى صفحة سجل النشاطات
       const key = 'company_supervisor_activities';
 
       let previous: unknown;
@@ -722,7 +818,6 @@ export class CompanySupervisors implements OnInit {
         'تم حفظ التقييم بنجاح. يمكنك مراجعته وتعديله من تبويب سجل التقييمات.'
       );
 
-      // تبقى نافذة التقييم مفتوحة ولا يتم الانتقال لسجل النشاطات
       this.cdr.detectChanges();
     } catch (error) {
       console.error('Evaluation local save failed:', error);

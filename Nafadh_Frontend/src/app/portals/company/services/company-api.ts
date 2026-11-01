@@ -182,7 +182,9 @@ export class CompanyApi {
     );
   }
 
-
+  addTrainer(dto: unknown): Observable<unknown> {
+    return this.http.post<unknown>(`${this.base}/Trainer`, dto);
+  }
   // ============================================================
   // Trainees
   // ============================================================
@@ -518,6 +520,20 @@ export class CompanyApi {
     );
   }
 
+  // جلب مهام الشركة
+  getTasksByCompany(companyId: number) {
+    return this.http.get<any[]>(
+      `${this.base}/Task/company/${companyId}`
+    );
+  }
+
+  // جلب تسليمات مهمة محددة
+  getSubmissionsByTask(taskId: number) {
+    return this.http.get<any[]>(
+      `${this.base}/Submission/task/${taskId}`
+    );
+  }
+
   // ============================================================
   // Announcements
   // ============================================================
@@ -848,14 +864,14 @@ export class CompanyApi {
   getPortalCompany(id: number): Observable<CompanyDto> {
     return this.http.get<CompanyDto>(`${this.portalBase}/company/${id}`);
   }
-  updatePortalCompanyContact(id: number, dto: {phone: string; email: string}): Observable<{phone: string; email: string}> {
-    return this.http.patch<{phone: string; email: string}>(`${this.portalBase}/company/${id}/contact`, {phone: dto.phone, email: dto.email});
+  updatePortalCompanyContact(id: number, dto: { phone: string; email: string }): Observable<{ phone: string; email: string }> {
+    return this.http.patch<{ phone: string; email: string }>(`${this.portalBase}/company/${id}/contact`, { phone: dto.phone, email: dto.email });
   }
   getPortalBranches(id: number): Observable<CompanyBranchDto[]> {
     return this.http.get<CompanyBranchDto[]>(`${this.portalBase}/company/${id}/branches`);
   }
-  addPortalBranch(dto: {companyId: number; location: string; contactPoint: string}): Observable<CompanyBranchDto> {
-    return this.http.post<CompanyBranchDto>(`${this.portalBase}/company/${dto.companyId}/branches`, {location: dto.location, contactPoint: dto.contactPoint});
+  addPortalBranch(dto: { companyId: number; location: string; contactPoint: string }): Observable<CompanyBranchDto> {
+    return this.http.post<CompanyBranchDto>(`${this.portalBase}/company/${dto.companyId}/branches`, { location: dto.location, contactPoint: dto.contactPoint });
   }
   getPortalSupervisors(id: number): Observable<CompanySupervisorDto[]> {
     return this.http.get<CompanySupervisorDto[]>(`${this.portalBase}/company/${id}/supervisors`);
@@ -863,8 +879,8 @@ export class CompanyApi {
   getPortalEnrollments(id: number): Observable<EnrollmentDto[]> {
     return this.http.get<EnrollmentDto[]>(`${this.portalBase}/company/${id}/enrollments`);
   }
-  getPortalCapacity(id: number): Observable<{total: number; used: number; remaining: number}> {
-    return this.http.get<{total: number; used: number; remaining: number}>(`${this.portalBase}/company/${id}/capacity`);
+  getPortalCapacity(id: number): Observable<{ total: number; used: number; remaining: number }> {
+    return this.http.get<{ total: number; used: number; remaining: number }>(`${this.portalBase}/company/${id}/capacity`);
   }
   getPortalAttendance(id: number): Observable<AttendanceReportDto> {
     return this.http.get<AttendanceReportDto>(`${this.portalBase}/company/${id}/attendance`);
@@ -875,13 +891,13 @@ export class CompanyApi {
   getPortalConversation(id: number): Observable<ConversationDetailDto> {
     return this.http.get<ConversationDetailDto>(`${this.portalBase}/conversations/${id}`);
   }
-  startPortalConversation(dto: {type: string; category: string; subject: string; firstMessage: string}): Observable<ConversationDetailDto> {
+  startPortalConversation(dto: { type: string; category: string; subject: string; firstMessage: string }): Observable<ConversationDetailDto> {
     const form = new FormData();
     form.set('Category', dto.category); form.set('Subject', dto.subject.trim()); form.set('FirstMessage', dto.firstMessage.trim());
     return this.http.post<ConversationDetailDto>(`${this.portalBase}/conversations`, form);
   }
-  sendPortalMessage(id: number, dto: {content: string}): Observable<ConversationMessageDto> {
-    return this.http.post<ConversationMessageDto>(`${this.portalBase}/conversations/${id}/messages`, {content: dto.content.trim()});
+  sendPortalMessage(id: number, dto: { content: string }): Observable<ConversationMessageDto> {
+    return this.http.post<ConversationMessageDto>(`${this.portalBase}/conversations/${id}/messages`, { content: dto.content.trim() });
   }
   markPortalConversationRead(id: number): Observable<unknown> {
     return this.http.put(`${this.portalBase}/conversations/${id}/read`, {});

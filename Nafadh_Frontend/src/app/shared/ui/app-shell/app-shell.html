@@ -87,12 +87,30 @@
               <nfd-icon name="bell" />
               <span>لا توجد إشعارات جديدة</span>
             </div>
-          } @else {
-            <!-- ضع هنا كود قائمة الإشعارات الخاص بك كما هو -->
-            <div class="notif-summary-list">
-                <!-- ... عناصر الإشعارات ... -->
-            </div>
           }
+          <div class="notif-summary-list">
+            @if (notificationRoute()) {
+              <button type="button" class="notif-summary-item notif-summary-item-clickable" (click)="openBellItem('notifications')">
+                <span class="notif-summary-icon"><nfd-icon name="bell" /></span>
+                <span class="notif-summary-content"><strong>مركز الإشعارات</strong><small>عرض جميع الإشعارات</small></span>
+                <span class="notif-count">{{ notificationSummary().notificationsCount }}</span>
+              </button>
+            }
+            @if (communicationRoute()) {
+              <button type="button" class="notif-summary-item notif-summary-item-clickable" (click)="openBellItem('communication')">
+                <span class="notif-summary-icon"><nfd-icon name="chat" /></span>
+                <span class="notif-summary-content"><strong>التواصل والمراسلات</strong><small>محادثات غير مقروءة</small></span>
+                <span class="notif-count">{{ notificationSummary().conversationsCount }}</span>
+              </button>
+              @if (notificationSummary().directMessagesCount > 0) {
+                <button type="button" class="notif-summary-item notif-summary-item-clickable" (click)="openBellItem('messages')">
+                  <span class="notif-summary-icon"><nfd-icon name="chat" /></span>
+                  <span class="notif-summary-content"><strong>الرسائل المباشرة</strong><small>رسائل غير مقروءة</small></span>
+                  <span class="notif-count">{{ notificationSummary().directMessagesCount }}</span>
+                </button>
+              }
+            }
+          </div>
         </div>
       }
     </div>

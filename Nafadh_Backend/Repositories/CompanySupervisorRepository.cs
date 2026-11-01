@@ -88,14 +88,40 @@ namespace Nafadh_Backend.Repositories
         // ============================================================
         // Add Supervisor
         // ============================================================
+        
         public async Task AddAsync(NFD_CompanySupervisor supervisor)
         {
-            await _context.Set<NFD_CompanySupervisor>()
-                .AddAsync(supervisor);
+            if (supervisor == null)
+                throw new ArgumentNullException(nameof(supervisor));
 
-            await _context.SaveChangesAsync();
+            try
+            {
+                Console.WriteLine("1. Starting Add Supervisor...");
+
+                // إضافة الكيان إلى EF Core
+                _context.Set<NFD_CompanySupervisor>().Add(supervisor);
+
+                Console.WriteLine("2. Supervisor added to EF tracking.");
+
+                // حفظ البيانات في قاعدة البيانات
+                var result = await _context.SaveChangesAsync();
+
+                Console.WriteLine($"3. SaveChanges completed. Rows affected: {result}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("========== ADD SUPERVISOR ERROR ==========");
+                Console.WriteLine(ex.ToString());
+
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine("========== INNER EXCEPTION ==========");
+                    Console.WriteLine(ex.InnerException.ToString());
+                }
+
+                throw;
+            }
         }
-
         // ============================================================
         // Update Supervisor
         // ============================================================

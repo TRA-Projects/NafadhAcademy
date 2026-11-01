@@ -43,7 +43,7 @@
                 <line x1="16" y1="17" x2="8" y2="17"/>
               </svg>
             </span>
-            <h3 class="title">إعلانات الهيئة والمنصة</h3>
+            <h3 class="title">إعلانات الإدارة</h3>
           </div>
           <div class="header-left">
             <span class="count-badge">{{ announcements().length }}</span>
@@ -97,7 +97,7 @@
           } @empty {
             <div class="announcement-empty">
               <i class="fa-regular fa-bell-slash"></i>
-              <span>لا توجد إعلانات منشورة حاليًا من الهيئة أو المنصة.</span>
+              <span role="status">{{ loading() ? 'جارٍ تحميل الإعلانات…' : announcementsError() ? 'تعذّر تحميل الإعلانات. اضغط تحديث لإعادة المحاولة.' : 'لا توجد إعلانات من الإدارة موجّهة للشركات أو للجميع حاليًا.' }}</span>
             </div>
           }
         </div>
@@ -605,7 +605,7 @@
       (click)="$event.stopPropagation()">
 
       <div class="modal-header flyer-top-bar">
-        <span class="org-brand">إعلان رسمي من الهيئة والمنصة</span>
+        <span class="org-brand">إعلان من الإدارة</span>
         <button
           class="close-btn"
           type="button"
