@@ -86,8 +86,8 @@ export interface SelectedTraineeDetailView {
   trainerName?: string;
 
   performancePercent?: number;
-  technicalScore?: number | null;
-  behavioralScore?: number | null;
+  technicalScore?: number;
+  behavioralScore?: number;
   moduleProgressPercent?: number;
   attendancePercent?: number;
 
@@ -232,18 +232,19 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
   });
 
   // دوال التحكم
-  setTopLimit(limit: number) { this.topLimit.set(limit); }
-  onTopSearchInput(e: Event) { this.topSearchQuery.set((e.target as HTMLInputElement).value); }
-  clearTopSearch() { this.topSearchQuery.set(''); }
-  onTopProgramChange(e: Event) { this.topSelectedProgram.set((e.target as HTMLSelectElement).value); }
-  onTopCompanyChange(e: Event) { this.topSelectedCompany.set((e.target as HTMLSelectElement).value); }
-  onTopSortChange(e: Event) { this.topSortBy.set((e.target as HTMLSelectElement).value); }
+  setTopLimit(limit: number) { this.topLimit.set(limit); this.topPage.set(1); }
+  onTopSearchInput(e: Event) { this.topSearchQuery.set((e.target as HTMLInputElement).value); this.topPage.set(1); }
+  clearTopSearch() { this.topSearchQuery.set(''); this.topPage.set(1); }
+  onTopProgramChange(e: Event) { this.topSelectedProgram.set((e.target as HTMLSelectElement).value); this.topPage.set(1); }
+  onTopCompanyChange(e: Event) { this.topSelectedCompany.set((e.target as HTMLSelectElement).value); this.topPage.set(1); }
+  onTopSortChange(e: Event) { this.topSortBy.set((e.target as HTMLSelectElement).value); this.topPage.set(1); }
   resetTopFilters() {
     this.topLimit.set(0);
     this.topSearchQuery.set('');
     this.topSelectedProgram.set('all');
     this.topSelectedCompany.set('all');
     this.topSortBy.set('score_desc');
+    this.topPage.set(1);
   }
 
   // --- متغيرات فلترة صفحة المتعثرين ---
@@ -339,13 +340,13 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
   });
 
   // دوال التحكم بالمتعثرين
-  setRiskLimit(limit: number) { this.riskLimit.set(limit); }
-  onRiskSearchInput(e: Event) { this.riskSearchQuery.set((e.target as HTMLInputElement).value); }
-  clearRiskSearch() { this.riskSearchQuery.set(''); }
-  onRiskSeverityChange(e: Event) { this.riskSeverity.set((e.target as HTMLSelectElement).value); }
-  onRiskProgramChange(e: Event) { this.riskSelectedProgram.set((e.target as HTMLSelectElement).value); }
-  onRiskCompanyChange(e: Event) { this.riskSelectedCompany.set((e.target as HTMLSelectElement).value); }
-  onRiskSortChange(e: Event) { this.riskSortBy.set((e.target as HTMLSelectElement).value); }
+  setRiskLimit(limit: number) { this.riskLimit.set(limit); this.riskPage.set(1); }
+  onRiskSearchInput(e: Event) { this.riskSearchQuery.set((e.target as HTMLInputElement).value); this.riskPage.set(1); }
+  clearRiskSearch() { this.riskSearchQuery.set(''); this.riskPage.set(1); }
+  onRiskSeverityChange(e: Event) { this.riskSeverity.set((e.target as HTMLSelectElement).value); this.riskPage.set(1); }
+  onRiskProgramChange(e: Event) { this.riskSelectedProgram.set((e.target as HTMLSelectElement).value); this.riskPage.set(1); }
+  onRiskCompanyChange(e: Event) { this.riskSelectedCompany.set((e.target as HTMLSelectElement).value); this.riskPage.set(1); }
+  onRiskSortChange(e: Event) { this.riskSortBy.set((e.target as HTMLSelectElement).value); this.riskPage.set(1); }
   resetRiskFilters() {
     this.riskLimit.set(0);
     this.riskSearchQuery.set('');
@@ -353,6 +354,7 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
     this.riskSelectedProgram.set('all');
     this.riskSelectedCompany.set('all');
     this.riskSortBy.set('attendance_asc');
+    this.riskPage.set(1);
   }
 
   // حالة عرض صفحة المتدرب التفصيلية الكاملة
@@ -379,65 +381,64 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
   });
 
   // Pagination - Top Performers
-topPage = signal<number>(1);
-readonly topPageSize = 10;
+  topPage = signal<number>(1);
+  readonly topPageSize = 10;
 
-totalTopPages = computed(() =>
-  Math.max(1, Math.ceil(this.filteredTopPerformers().length / this.topPageSize))
-);
-
-paginatedTopPerformers = computed(() => {
-  const start = (this.topPage() - 1) * this.topPageSize;
-  return this.filteredTopPerformers().slice(start, start + this.topPageSize);
-});
-
-visibleTopPages = computed(() => {
-  const total = this.totalTopPages();
-  const current = this.topPage();
-  const start = Math.max(1, Math.min(current - 2, total - 4));
-
-  return Array.from(
-    { length: Math.min(5, total) },
-    (_, i) => start + i
+  totalTopPages = computed(() =>
+    Math.max(1, Math.ceil(this.filteredTopPerformers().length / this.topPageSize))
   );
-});
 
-goToTopPage(page: number): void {
-  if (page < 1 || page > this.totalTopPages()) return;
-  this.topPage.set(page);
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
+  paginatedTopPerformers = computed(() => {
+    const start = (this.topPage() - 1) * this.topPageSize;
+    return this.filteredTopPerformers().slice(start, start + this.topPageSize);
+  });
 
+  visibleTopPages = computed(() => {
+    const total = this.totalTopPages();
+    const current = this.topPage();
+    const start = Math.max(1, Math.min(current - 2, total - 4));
 
-// Pagination - At Risk
-riskPage = signal<number>(1);
-readonly riskPageSize = 10;
+    return Array.from(
+      { length: Math.min(5, total) },
+      (_, i) => start + i
+    );
+  });
 
-totalRiskPages = computed(() =>
-  Math.max(1, Math.ceil(this.filteredAtRiskTrainees().length / this.riskPageSize))
-);
+  goToTopPage(page: number): void {
+    if (page < 1 || page > this.totalTopPages()) return;
+    this.topPage.set(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
-paginatedAtRiskTrainees = computed(() => {
-  const start = (this.riskPage() - 1) * this.riskPageSize;
-  return this.filteredAtRiskTrainees().slice(start, start + this.riskPageSize);
-});
+  // Pagination - At Risk
+  riskPage = signal<number>(1);
+  readonly riskPageSize = 10;
 
-visibleRiskPages = computed(() => {
-  const total = this.totalRiskPages();
-  const current = this.riskPage();
-  const start = Math.max(1, Math.min(current - 2, total - 4));
-
-  return Array.from(
-    { length: Math.min(5, total) },
-    (_, i) => start + i
+  totalRiskPages = computed(() =>
+    Math.max(1, Math.ceil(this.filteredAtRiskTrainees().length / this.riskPageSize))
   );
-});
 
-goToRiskPage(page: number): void {
-  if (page < 1 || page > this.totalRiskPages()) return;
-  this.riskPage.set(page);
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
+  paginatedAtRiskTrainees = computed(() => {
+    const start = (this.riskPage() - 1) * this.riskPageSize;
+    return this.filteredAtRiskTrainees().slice(start, start + this.riskPageSize);
+  });
+
+  visibleRiskPages = computed(() => {
+    const total = this.totalRiskPages();
+    const current = this.riskPage();
+    const start = Math.max(1, Math.min(current - 2, total - 4));
+
+    return Array.from(
+      { length: Math.min(5, total) },
+      (_, i) => start + i
+    );
+  });
+
+  goToRiskPage(page: number): void {
+    if (page < 1 || page > this.totalRiskPages()) return;
+    this.riskPage.set(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
   visibleActivityPages = computed(() => {
     const total = this.totalActivityPages();
@@ -798,36 +799,10 @@ goToRiskPage(page: number): void {
         const lateCount = attList.filter(a => String(a.status).toLowerCase().includes('late') || a.status === 3).length;
         const excusedCount = attList.filter(a => String(a.status).toLowerCase().includes('excus') || a.status === 4).length;
 
-        // فصل التقييمات الفنية والسلوكية حسب نوع نموذج التقييم في Backend.
-       const getAverageScore = (typeName: string): number | null => {
-  const scores = evalList
-    .filter((e: any) =>
-      String(e.templateType ?? '').toLowerCase() === typeName.toLowerCase()
-      && e.score !== null
-      && e.score !== undefined
-    )
-    .map((e: any) => Number(e.score))
-    .filter((score: number) => Number.isFinite(score));
+        const latestEval = evalList[0];
+        const evalNotes = latestEval?.feedback || latestEval?.notes || latestEval?.comment || initialView.trainerNotes;
+        const evalTrainer = latestEval?.trainerName || firstEnr?.trainerName || initialView.trainerName;
 
-  return scores.length
-    ? Math.round(
-        scores.reduce((sum: number, score: number) => sum + score, 0)
-        / scores.length * 10
-      ) / 10
-    : null;
-};
-
-        const technicalScore = getAverageScore('Technical');
-        const behavioralScore = getAverageScore('Behavioral');
-
-        const latestEval = [...evalList].sort(
-  (a: any, b: any) =>
-    new Date(b.evaluationDate).getTime() -
-    new Date(a.evaluationDate).getTime()
-)[0];
-
-const evalNotes = latestEval?.notes || initialView.trainerNotes;
-const evalTrainer = latestEval?.trainerName || firstEnr?.trainerName || initialView.trainerName;
         const traineeWarnings = this.allWarningsCache()
           .filter((w: any) =>
             w.traineeId === traineeId ||
@@ -875,8 +850,6 @@ const evalTrainer = latestEval?.trainerName || firstEnr?.trainerName || initialV
           lateDays: attList.length > 0 ? lateCount : initialView.lateDays,
           excusedDays: attList.length > 0 ? excusedCount : initialView.excusedDays,
           trainerNotes: evalNotes,
-          technicalScore,
-          behavioralScore,
           skills: skillsArr,
           gitHubUrl: this.getSafeGitHubUrl(
             profile?.gitHubUrl || initialView.gitHubUrl
