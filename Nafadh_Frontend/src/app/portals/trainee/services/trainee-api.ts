@@ -42,7 +42,7 @@ import {
   QuizAttemptDto,
   StartQuizAttemptDto,
   WithdrawalRequestDto,       
-  CreateWithdrawalRequestDto  
+  CreateWithdrawalRequestDto
 } from '../../../core/models/dtos';
 
 
@@ -490,6 +490,47 @@ getSessionsByBatch(
       `${this.base}/Session/${sessionId}`
     );
   }
+
+
+
+// =========================================================
+// Trainee Live Room
+// =========================================================
+
+joinTraineeLiveRoom(
+  sessionId: number
+): Observable<{
+  sessionId: number;
+  roomName: string;
+  serverUrl: string;
+  participantToken: string;
+  tokenExpiresAtUtc: string;
+}> {
+  return this.http.post<{
+    sessionId: number;
+    roomName: string;
+    serverUrl: string;
+    participantToken: string;
+    tokenExpiresAtUtc: string;
+  }>(
+    `${this.base}/trainee/live-sessions/${sessionId}/room/join`,
+    {}
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
   // =========================================================
@@ -1233,4 +1274,16 @@ getSessionsByBatch(
   sendProctoringEvent(attemptId: number, data: FormData): Observable<any> {
     return this.http.post<any>(`${this.base}/quiz-proctoring/attempts/${attemptId}/events`, data);
   }
+
+  // =========================================================
+  // Overall Evaluation (التقييم الكلي)
+  // =========================================================
+  getOverallEvaluation(
+    enrollmentId: number
+  ): Observable<any> {
+    return this.http.get<any>(
+      `${this.base}/TraineeEvaluations/${enrollmentId}/overall-evaluation`
+    );
+  }
+
 }

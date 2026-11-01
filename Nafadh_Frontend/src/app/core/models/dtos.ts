@@ -440,7 +440,9 @@ export interface SessionDto {
   learningObjectives?: string | null;
   recordingUrl?: string | null;
   summary?: string | null;
-  status: 'Scheduled' | 'Completed' | 'Cancelled' | 'Postponed';
+
+status: 'Scheduled' | 'InProgress' | 'Completed' | 'Cancelled' | 'Postponed';
+
 }
 
 
