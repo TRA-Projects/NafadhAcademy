@@ -1,5 +1,6 @@
 import {
   Component,
+  ElementRef,
   HostListener,
   computed,
   inject,
@@ -83,6 +84,7 @@ export class AppShell {
 
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly hostElement = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly notificationSummaryService = inject(NotificationSummaryService);
 
@@ -163,6 +165,16 @@ export class AppShell {
 
   toggleLang(): void {
     this.lang.update((value) => (value === 'ar' ? 'en' : 'ar'));
+  }
+
+  @HostListener('document:click', ['$event'])
+  closeNotificationsOutside(event: MouseEvent): void {
+    if (!this.notifOpen()) return;
+    const target = event.target as Node | null;
+    const bell = this.hostElement.nativeElement.querySelector('.notif-wrap');
+    if (target && bell && !bell.contains(target)) {
+      this.notifOpen.set(false);
+    }
   }
 
   /** Open/close the bell and refresh its real database counters when opened. */
