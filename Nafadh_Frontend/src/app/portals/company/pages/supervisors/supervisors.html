@@ -1,3 +1,4 @@
+
 <!-- إدارة المشرفين -->
 <div class="page-header-section">
   <div class="page-head-text">
@@ -20,7 +21,9 @@
     <button class="btn-refresh" type="button" (click)="refreshData()">
       <span>↻</span> تحديث
     </button>
-    <button class="btn-add" type="button" (click)="openAddModal()">
+
+    <!-- زر إضافة مدرب مستقل -->
+    <button class="btn-add" type="button" (click)="openAddTrainerModal()">
       <span>＋</span> إضافة مدرب
     </button>
   </div>
@@ -390,7 +393,7 @@
       <div class="modal-header">
         <div>
           <span class="modal-kicker">إدارة الحساب</span>
-          <h2>{{ editingSupervisor ? 'تعديل بيانات المدرب' : 'إضافة مدرب' }}</h2>
+          <h2>{{ editingSupervisor ? 'تعديل بيانات المشرف' : 'إضافة مشرف' }}</h2>
         </div>
         <button class="close-btn" type="button" (click)="closeAddModal()">×</button>
       </div>
@@ -456,9 +459,121 @@
         <div class="modal-actions">
           <button type="button" class="btn-cancel-modal" (click)="closeAddModal()">إلغاء</button>
           <button type="submit" class="btn-save-modal" [disabled]="supervisorForm.invalid">
-            {{ editingSupervisor ? 'حفظ التعديلات' : 'إضافة المدرب' }}
+            {{ editingSupervisor ? 'حفظ التعديلات' : 'إضافة المشرف' }}
           </button>
         </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- نافذة إضافة مدرب مستقلة -->
+@if (showTrainerModal) {
+  <div class="modal-backdrop" (click)="closeTrainerModal()">
+    <div class="modal-card trainer-modal" dir="rtl" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <div>
+          <span class="modal-kicker">إدارة المدربين</span>
+          <h2>إضافة ملف مدرب</h2>
+          <p class="modal-subtext">أدخلي بيانات ملف المدرب وربطيه بحساب مستخدم موجود.</p>
+        </div>
+
+        <button
+          class="close-btn"
+          type="button"
+          (click)="closeTrainerModal()"
+          aria-label="إغلاق">
+          ×
+        </button>
+      </div>
+
+      <div class="trainer-form-note">
+        <strong>تنبيه:</strong>
+        يجب أن يكون رقم المستخدم مرتبطًا بحساب موجود مسبقًا في النظام.
+        هذه العملية تنشئ ملف المدرب ولا تنشئ حساب مستخدم جديدًا.
+      </div>
+
+      <form (ngSubmit)="submitTrainer()" #trainerForm="ngForm">
+
+        <div class="form-group">
+          <label for="trainerUserId">رقم حساب المستخدم <span>*</span></label>
+          <input
+            id="trainerUserId"
+            class="form-input"
+            type="number"
+            min="1"
+            placeholder="أدخلي رقم المستخدم User ID"
+            [(ngModel)]="newTrainer.userId"
+            name="userId"
+            required />
+        </div>
+
+        <div class="form-group">
+          <label for="trainerSpecialty">التخصص <span>*</span></label>
+          <input
+            id="trainerSpecialty"
+            class="form-input"
+            type="text"
+            placeholder="مثال: تقنية المعلومات"
+            [(ngModel)]="newTrainer.specialty"
+            name="specialty"
+            required />
+        </div>
+
+        <div class="form-group">
+          <label for="trainerExperience">سنوات الخبرة</label>
+          <input
+            id="trainerExperience"
+            class="form-input"
+            type="number"
+            min="0"
+            step="0.5"
+            placeholder="عدد سنوات الخبرة"
+            [(ngModel)]="newTrainer.experienceYears"
+            name="experienceYears" />
+        </div>
+
+        <div class="form-group">
+          <label for="trainerBiography">نبذة عن المدرب</label>
+          <textarea
+            id="trainerBiography"
+            class="form-input trainer-biography"
+            rows="4"
+            placeholder="اكتبي نبذة مختصرة عن خبرات المدرب ومؤهلاته..."
+            [(ngModel)]="newTrainer.biography"
+            name="biography">
+          </textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="trainerCvUrl">رابط السيرة الذاتية</label>
+          <input
+            id="trainerCvUrl"
+            class="form-input"
+            type="url"
+            placeholder="https://example.com/cv.pdf"
+            [(ngModel)]="newTrainer.cvUrl"
+            name="cvUrl" />
+        </div>
+
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="btn-cancel-modal"
+            (click)="closeTrainerModal()"
+            [disabled]="savingTrainer">
+            إلغاء
+          </button>
+
+          <button
+            type="submit"
+            class="btn-save-modal"
+            [disabled]="savingTrainer || trainerForm.invalid">
+            {{ savingTrainer ? 'جارٍ الحفظ...' : 'حفظ ملف المدرب' }}
+          </button>
+        </div>
+
       </form>
     </div>
   </div>
@@ -783,6 +898,7 @@
   </div>
 }
 
+<!-- رسائل التنبيه -->
 @if (toast.visible) {
   <div class="toast" [ngClass]="toast.type">
     <div class="toast-icon">{{ toast.type === 'success' ? '✓' : '!' }}</div>
